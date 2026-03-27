@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#ffffff" />
+  <title>PRISMOR — Vision For All</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════
+       HEADER
+  ═══════════════════════════════════════════ -->
+  <header id="site-header">
+    <div class="container header-inner">
+      <a href="#" class="logo" aria-label="PRISMOR Home">
+        <img src="logo.png" alt="PRISMOR" class="logo-img" />
+      </a>
+      <p class="header-tagline">Vision For All</p>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ═══════════════════════════════════════════
+         PRODUCT SHOWCASE
+    ═══════════════════════════════════════════ -->
+    <section id="product-showcase" aria-label="Product gallery">
+      <div class="showcase-wrap">
+
+        <!-- Left: Thumbnail Rail -->
+        <div class="thumbnail-rail" id="thumbnailRail" role="list" aria-label="Product views"></div>
+
+        <!-- Right: Main Viewer -->
+        <div class="main-viewer" id="mainViewer" role="img" aria-label="Product preview">
+          <div class="main-media-wrap" id="mainMediaWrap"></div>
+          <button class="expand-btn" id="expandBtn" aria-label="View fullscreen">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M8 3H5a2 2 0 00-2 2v3"/><path d="M21 8V5a2 2 0 00-2-2h-3"/>
+              <path d="M3 16v3a2 2 0 002 2h3"/><path d="M16 21h3a2 2 0 002-2v-3"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Mobile: Horizontal thumbnails below -->
+        <div class="thumbnail-rail-mobile" id="thumbnailRailMobile" role="list" aria-label="Product views"></div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+         PRODUCT TITLE + CONTACT
+    ═══════════════════════════════════════════ -->
+    <section id="product-meta">
+      <div class="container">
+        <span class="collection-label">PRISMOR — Signature Collection</span>
+
+        <!-- Title row: product name + WA icon button inline -->
+        <div class="product-name-row">
+          <h1 class="product-name" id="productName">Eclipse Pro · Polarized UV400</h1>
+          <a
+            href="https://wa.me/8801700000000?text=Hi%2C%20I%27m%20interested%20in%20PRISMOR%20Eclipse%20Pro"
+            class="btn-wa-icon"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Chat with us on WhatsApp"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+            </svg>
+            <span class="wa-label">Chat with us</span>
+          </a>
+        </div>
+
+        <div class="product-badges">
+          <span class="badge">UV400 Protected</span>
+          <span class="badge">Polarized Lens</span>
+          <span class="badge">Lightweight Frame</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+         PRODUCT DESCRIPTION + SPECIFICATIONS
+    ═══════════════════════════════════════════ -->
+    <section id="product-description">
+      <div class="container">
+        <!-- Specifications only, full width -->
+        <div class="spec-section">
+          <span class="section-label">Specifications</span>
+          <ul class="spec-list" id="specCollapsible" aria-label="Product specifications">
+            <li><span class="spec-key">Lens Type</span><span class="spec-val">Polarized CR-39</span></li>
+            <li><span class="spec-key">UV Protection</span><span class="spec-val">UV400 (100%)</span></li>
+            <li><span class="spec-key">Frame Material</span><span class="spec-val">Premium Acetate</span></li>
+            <li><span class="spec-key">Frame Width</span><span class="spec-val">140 mm</span></li>
+            <li><span class="spec-key">Lens Width</span><span class="spec-val">58 mm</span></li>
+            <li><span class="spec-key">Bridge</span><span class="spec-val">18 mm</span></li>
+            <li><span class="spec-key">Temple Length</span><span class="spec-val">145 mm</span></li>
+            <li><span class="spec-key">Weight</span><span class="spec-val">22 g</span></li>
+            <li><span class="spec-key">Gender</span><span class="spec-val">Unisex</span></li>
+            <li><span class="spec-key">Includes</span><span class="spec-val">Hard Case + Cloth</span></li>
+          </ul>
+          <button class="see-more-btn" id="seeMoreBtn" aria-expanded="false">
+            <span>See more</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <path d="M6 9l6 6 6-6"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+         ORDER SECTION
+    ═══════════════════════════════════════════ -->
+    <section id="order-section" aria-label="Place your order">
+      <div class="container">
+
+        <div class="order-section-head">
+          <h2 class="section-title">Place Your Order</h2>
+          <p class="section-subtitle">Cash on Delivery — No advance payment required</p>
+        </div>
+
+        <div class="order-layout">
+
+          <!-- Order Form -->
+          <div class="order-form-col">
+            <form id="orderForm" novalidate autocomplete="on">
+
+              <div class="form-group" id="fgName">
+                <label for="custName">Full Name <span class="req" aria-hidden="true">*</span></label>
+                <input type="text" id="custName" name="name" placeholder="Enter your full name"
+                  autocomplete="name" inputmode="text" />
+                <span class="field-err" id="nameErr" role="alert"></span>
+              </div>
+
+              <div class="form-group" id="fgPhone">
+                <label for="custPhone">Phone Number <span class="req" aria-hidden="true">*</span></label>
+                <div class="input-with-prefix">
+                  <span class="input-prefix">+88</span>
+                  <input type="tel" id="custPhone" name="phone" placeholder="01XXXXXXXXX"
+                    autocomplete="tel" inputmode="numeric" maxlength="11" />
+                </div>
+                <span class="field-err" id="phoneErr" role="alert"></span>
+              </div>
+
+              <div class="form-group" id="fgAddress">
+                <label for="custAddress">Delivery Address <span class="req" aria-hidden="true">*</span></label>
+                <textarea id="custAddress" name="address" placeholder="House number, road, area, district"
+                  rows="3" autocomplete="street-address"></textarea>
+                <span class="field-err" id="addressErr" role="alert"></span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label-block">Delivery Area <span class="req" aria-hidden="true">*</span></label>
+                <div class="delivery-options" role="radiogroup" aria-label="Select delivery area">
+
+                  <label class="delivery-card" id="cardInside">
+                    <input type="radio" name="delivery" value="inside" checked />
+                    <div class="delivery-card-body">
+                      <div class="delivery-card-top">
+                        <span class="dc-title">Inside Dhaka</span>
+                        <span class="dc-price">৳ 70</span>
+                      </div>
+                      <span class="dc-time">Delivery in 1–2 days</span>
+                    </div>
+                    <span class="dc-check" aria-hidden="true">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+                    </span>
+                  </label>
+
+                  <label class="delivery-card" id="cardOutside">
+                    <input type="radio" name="delivery" value="outside" />
+                    <div class="delivery-card-body">
+                      <div class="delivery-card-top">
+                        <span class="dc-title">Outside Dhaka</span>
+                        <span class="dc-price">৳ 120</span>
+                      </div>
+                      <span class="dc-time">Delivery in 2–4 days</span>
+                    </div>
+                    <span class="dc-check" aria-hidden="true">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+                    </span>
+                  </label>
+
+                </div>
+              </div>
+
+            </form>
+          </div>
+
+          <!-- Price Calculation -->
+          <div class="price-col">
+            <div class="price-card">
+              <h3 class="price-card-title">Order Summary</h3>
+              <div class="price-lines">
+                <div class="price-row">
+                  <span>Product Price</span><span>৳ 3,500</span>
+                </div>
+                <div class="price-row discount-row">
+                  <span>Discount <em>(20% off)</em></span>
+                  <span class="discount-val">− ৳ 700</span>
+                </div>
+                <div class="price-row subtotal-row">
+                  <span>After Discount</span><span>৳ 2,800</span>
+                </div>
+                <div class="price-row">
+                  <span>Delivery</span>
+                  <span id="deliveryCharge">৳ 70</span>
+                </div>
+              </div>
+              <div class="price-divider"></div>
+              <div class="price-total-row">
+                <span>Total COD</span>
+                <span class="total-amount" id="totalPrice">৳ 2,870</span>
+              </div>
+              <p class="cod-note">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                Pay on delivery. No advance needed.
+              </p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Confirm Button -->
+        <div class="confirm-wrap">
+          <button class="btn-confirm" id="confirmBtn" type="button" aria-label="Confirm your order">
+            <span>Confirm Order</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
+          <p class="confirm-sub">Cash on delivery · No advance payment</p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+         RECOMMENDATION PRODUCTS
+    ═══════════════════════════════════════════ -->
+    <section id="recommendations" aria-label="Recommended products">
+      <div class="container">
+        <div class="rec-head">
+          <h2 class="section-title">You May Also Like</h2>
+          <p class="section-subtitle">Explore the full PRISMOR Collection</p>
+        </div>
+        <div class="rec-grid" id="recGrid"></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+         VISIT WEBSITE
+    ═══════════════════════════════════════════ -->
+    <section id="visit-website">
+      <div class="container visit-inner">
+        <p class="visit-text">Explore our full collection at</p>
+        <a href="https://prismorglasses.com" class="btn-visit" target="_blank" rel="noopener noreferrer">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
+          </svg>
+          Visit Our Website
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+            <path d="M7 17L17 7M7 7h10v10"/>
+          </svg>
+        </a>
+        <p class="visit-url">prismorglasses.com</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ═══════════════════════════════════════════
+       FOOTER
+  ═══════════════════════════════════════════ -->
+  <footer id="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <img src="logo.png" alt="PRISMOR" class="footer-logo-img" />
+        <p>Vision For All</p>
+      </div>
+      <div class="footer-links">
+        <a href="https://prismorglasses.com/" target="_blank" rel="noopener">prismorglasses.com</a>
+        <a href="https://wa.me/8801700000000" target="_blank" rel="noopener">WhatsApp</a>
+      </div>
+      <p class="footer-copy">&copy; 2025 PRISMOR. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- ═══════════════════════════════════════════
+       FULLSCREEN LIGHTBOX
+  ═══════════════════════════════════════════ -->
+  <div id="lightbox" class="lightbox" aria-modal="true" role="dialog" aria-label="Media viewer" aria-hidden="true">
+    <button class="lightbox-close" id="lightboxClose" aria-label="Close viewer">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M18 6L6 18M6 6l12 12"/>
+      </svg>
+    </button>
+    <div class="lightbox-inner" id="lightboxInner"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       INVOICE MODAL
+  ═══════════════════════════════════════════ -->
+  <div id="invoiceModal" class="modal invoice-modal" aria-modal="true" role="dialog" aria-label="Order invoice" aria-hidden="true">
+    <div class="modal-backdrop" id="invoiceBackdrop"></div>
+    <div class="invoice-sheet">
+
+      <!-- Action Bar (outside printable area) -->
+      <div class="invoice-action-bar">
+        <button class="invoice-download-btn" id="downloadPdfBtn" aria-label="Download invoice as PDF">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Download PDF
+        </button>
+        <button class="invoice-close-btn" id="invoiceClose" aria-label="Close invoice">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Invoice Content (printable) -->
+      <div class="invoice-content" id="invoiceContent"></div>
+
+    </div>
+  </div>
+
+  <script src="js/script.js"></script>
+</body>
+</html>

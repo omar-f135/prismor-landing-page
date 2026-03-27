@@ -1,0 +1,21 @@
+{
+  "productName": "Eclipse Pro · Polarized UV400",
+  "originalPrice": 3500,
+  "discountPct": 20,
+  "deliveryInside": 70,
+  "deliveryOutside": 120,
+  "whatsapp": "8801700000000",
+  "website": "https://prismorglasses.com",
+  "specs": [
+    { "key": "Lens Type", "val": "Polarized CR-39" },
+    { "key": "UV Protection", "val": "UV400 (100%)" },
+    { "key": "Frame Material", "val": "Premium Acetate" },
+    { "key": "Frame Width", "val": "140 mm" },
+    { "key": "Lens Width", "val": "58 mm" },
+    { "key": "Bridge", "val": "18 mm" },
+    { "key": "Temple Length", "val": "145 mm" },
+    { "key": "Weight", "val": "22 g" },
+    { "key": "Gender", "val": "Unisex" },
+    { "key": "Includes", "val": "Hard Case + Cloth" }
+  ]
+}

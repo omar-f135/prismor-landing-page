@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PRISMOR Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/admin/css/admin.css" />
+</head>
+<body>
+
+  <!-- ═══════════ LOGIN ═══════════ -->
+  <div id="loginScreen">
+    <div class="login-card">
+      <div class="login-logo">
+        <img src="/logo.png" alt="PRISMOR" onerror="this.style.display='none';this.nextElementSibling.style.display='block'" />
+        <span style="display:none">PRISMOR</span>
+      </div>
+      <h1 class="login-title">Admin Panel</h1>
+      <p class="login-sub">Enter your password to continue</p>
+      <form id="loginForm">
+        <div class="field-group">
+          <label>Password</label>
+          <input type="password" id="loginPassword" placeholder="Enter password" autocomplete="current-password" />
+          <span class="field-err" id="loginErr"></span>
+        </div>
+        <button type="submit" class="btn-primary btn-full" id="loginBtn">Sign In</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════ APP ═══════════ -->
+  <div id="app" style="display:none">
+
+    <!-- Sidebar -->
+    <nav id="sidebar">
+      <div class="sidebar-brand">
+        <img src="/logo.png" alt="PRISMOR" class="sidebar-logo"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='block'" />
+        <span style="display:none">PRISMOR</span>
+      </div>
+      <ul class="nav-list">
+        <li><a href="#" class="nav-link active" data-page="dashboard">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          Dashboard
+        </a></li>
+        <li><a href="#" class="nav-link" data-page="product">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+          Product
+        </a></li>
+        <li><a href="#" class="nav-link" data-page="media">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          Media
+        </a></li>
+        <li><a href="#" class="nav-link" data-page="orders">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          Orders
+          <span class="badge-count" id="pendingBadge" style="display:none"></span>
+        </a></li>
+        <li><a href="#" class="nav-link" data-page="recommendations">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          Recommendations
+        </a></li>
+        <li class="nav-separator"></li>
+        <li><a href="#" class="nav-link" data-page="settings">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          Settings
+        </a></li>
+      </ul>
+      <button class="btn-logout" id="logoutBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Logout
+      </button>
+    </nav>
+
+    <!-- Main content -->
+    <div id="mainWrap">
+
+      <!-- Top bar -->
+      <header id="topbar">
+        <button id="menuToggle" aria-label="Toggle menu">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <h2 id="pageTitle">Dashboard</h2>
+        <a href="/" target="_blank" class="topbar-preview">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          View Page
+        </a>
+      </header>
+
+      <!-- Page content -->
+      <main id="pageContent">
+
+        <!-- ── DASHBOARD ── -->
+        <div class="page" id="page-dashboard">
+          <div class="stat-grid" id="statGrid">
+            <div class="stat-card">
+              <p class="stat-label">Total Orders</p>
+              <p class="stat-val" id="statTotal">—</p>
+            </div>
+            <div class="stat-card">
+              <p class="stat-label">Pending</p>
+              <p class="stat-val orange" id="statPending">—</p>
+            </div>
+            <div class="stat-card">
+              <p class="stat-label">Confirmed</p>
+              <p class="stat-val" id="statConfirmed">—</p>
+            </div>
+            <div class="stat-card">
+              <p class="stat-label">Delivered</p>
+              <p class="stat-val green" id="statDelivered">—</p>
+            </div>
+          </div>
+
+          <div class="card mt-20">
+            <div class="card-head">
+              <h3>Recent Orders</h3>
+              <a href="#" class="link-sm" data-page="orders">View all →</a>
+            </div>
+            <div id="recentOrdersTable"></div>
+          </div>
+        </div>
+
+        <!-- ── PRODUCT ── -->
+        <div class="page" id="page-product" style="display:none">
+          <div class="card">
+            <div class="card-head"><h3>Product Details</h3></div>
+            <form id="productForm" class="form-grid">
+              <div class="field-group">
+                <label>Product Name</label>
+                <input type="text" id="pName" placeholder="e.g. Eclipse Pro · Polarized UV400" />
+              </div>
+              <div class="field-row-2">
+                <div class="field-group">
+                  <label>Original Price (৳)</label>
+                  <input type="number" id="pPrice" min="0" />
+                </div>
+                <div class="field-group">
+                  <label>Discount (%)</label>
+                  <input type="number" id="pDiscount" min="0" max="100" />
+                </div>
+              </div>
+              <div class="field-row-2">
+                <div class="field-group">
+                  <label>Delivery Inside Dhaka (৳)</label>
+                  <input type="number" id="pDeliveryIn" min="0" />
+                </div>
+                <div class="field-group">
+                  <label>Delivery Outside Dhaka (৳)</label>
+                  <input type="number" id="pDeliveryOut" min="0" />
+                </div>
+              </div>
+              <div class="field-group">
+                <label>WhatsApp Number (with country code, no +)</label>
+                <input type="text" id="pWhatsapp" placeholder="8801700000000" />
+              </div>
+              <div class="field-group">
+                <label>Website URL</label>
+                <input type="url" id="pWebsite" placeholder="https://prismorglasses.com" />
+              </div>
+              <div class="price-preview" id="pricePreview"></div>
+              <button type="submit" class="btn-primary">Save Product Details</button>
+            </form>
+          </div>
+
+          <div class="card mt-20">
+            <div class="card-head">
+              <h3>Specifications</h3>
+              <button class="btn-secondary btn-sm" id="addSpecBtn">+ Add Row</button>
+            </div>
+            <div id="specEditor"></div>
+            <div class="form-footer">
+              <button class="btn-primary" id="saveSpecsBtn">Save Specifications</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── MEDIA ── -->
+        <div class="page" id="page-media" style="display:none">
+          <div class="card">
+            <div class="card-head">
+              <h3>Product Media</h3>
+              <span class="hint-text">Images &amp; videos shown in the product gallery</span>
+            </div>
+            <div class="media-grid" id="mediaGrid"></div>
+          </div>
+
+          <div class="card mt-20">
+            <div class="card-head"><h3>Upload New Media</h3></div>
+            <form id="mediaUploadForm" class="form-grid">
+              <div class="field-group">
+                <label>Label / Variant Name</label>
+                <input type="text" id="mLabel" placeholder="e.g. Classic Matte Black" required />
+              </div>
+              <div class="field-row-2">
+                <div class="field-group">
+                  <label>Type</label>
+                  <select id="mType">
+                    <option value="image">Image</option>
+                    <option value="video">Video</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label>Bestseller?</label>
+                  <select id="mBestseller">
+                    <option value="false">No</option>
+                    <option value="true">Yes</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field-group">
+                <label>Background Gradient (CSS)</label>
+                <input type="text" id="mGradient" placeholder="linear-gradient(148deg, #1a1a1a 0%, #3a3a3a 100%)" />
+                <span class="field-hint">Used when no file is uploaded, or as background behind the image.</span>
+              </div>
+              <div class="field-group">
+                <label>File (image or video — optional)</label>
+                <input type="file" id="mFile" accept="image/*,video/*" />
+                <span class="field-hint">Leave empty to use gradient placeholder only.</span>
+              </div>
+              <button type="submit" class="btn-primary" id="uploadMediaBtn">Upload &amp; Add</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- ── ORDERS ── -->
+        <div class="page" id="page-orders" style="display:none">
+          <div class="card">
+            <div class="card-head">
+              <h3>All Orders</h3>
+              <div class="card-head-actions">
+                <input type="text" id="orderSearch" placeholder="Search phone / name…" class="search-input" />
+              </div>
+            </div>
+            <div id="ordersTable"></div>
+          </div>
+        </div>
+
+        <!-- ── RECOMMENDATIONS ── -->
+        <div class="page" id="page-recommendations" style="display:none">
+          <div class="card">
+            <div class="card-head">
+              <h3>You May Also Like</h3>
+              <button class="btn-primary btn-sm" id="addRecBtn">+ Add Product</button>
+            </div>
+            <div id="recList"></div>
+          </div>
+
+          <!-- Add / Edit rec form (hidden by default) -->
+          <div class="card mt-20" id="recFormCard" style="display:none">
+            <div class="card-head">
+              <h3 id="recFormTitle">Add Product</h3>
+              <button class="btn-ghost btn-sm" id="cancelRecBtn">Cancel</button>
+            </div>
+            <form id="recForm" class="form-grid">
+              <input type="hidden" id="recId" />
+              <div class="field-row-2">
+                <div class="field-group">
+                  <label>Product Name</label>
+                  <input type="text" id="rName" placeholder="Horizon Classic" required />
+                </div>
+                <div class="field-group">
+                  <label>Color Name</label>
+                  <input type="text" id="rColor" placeholder="Matte Black" required />
+                </div>
+              </div>
+              <div class="field-row-2">
+                <div class="field-group">
+                  <label>Color Hex</label>
+                  <div class="color-input-wrap">
+                    <input type="color" id="rColorHexPicker" value="#1a1a1a" />
+                    <input type="text" id="rColorHex" placeholder="#1a1a1a" />
+                  </div>
+                </div>
+                <div class="field-group">
+                  <label>Product Link (URL)</label>
+                  <input type="url" id="rLink" placeholder="https://..." />
+                </div>
+              </div>
+              <div class="field-row-2">
+                <div class="field-group">
+                  <label>Sale Price (৳)</label>
+                  <input type="number" id="rPrice" min="0" required />
+                </div>
+                <div class="field-group">
+                  <label>Original Price (৳)</label>
+                  <input type="number" id="rOriginal" min="0" required />
+                </div>
+              </div>
+              <div class="field-row-2">
+                <div class="field-group">
+                  <label>Badge Text (optional)</label>
+                  <input type="text" id="rBadge" placeholder="New / Popular / Sport" />
+                </div>
+                <div class="field-group">
+                  <label>Badge Color</label>
+                  <div class="color-input-wrap">
+                    <input type="color" id="rBadgeColorPicker" value="#ff8401" />
+                    <input type="text" id="rBadgeColor" placeholder="#ff8401" />
+                  </div>
+                </div>
+              </div>
+              <div class="field-group">
+                <label>Background Gradient (CSS)</label>
+                <input type="text" id="rGradient" placeholder="linear-gradient(148deg, #232526 0%, #414345 100%)" />
+              </div>
+              <button type="submit" class="btn-primary" id="recSubmitBtn">Save Product</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- ── SETTINGS ── -->
+        <div class="page" id="page-settings" style="display:none">
+          <div class="card" style="max-width:480px">
+            <div class="card-head"><h3>Change Password</h3></div>
+            <form id="passwordForm" class="form-grid">
+              <div class="field-group">
+                <label>Current Password</label>
+                <input type="password" id="currentPassword" autocomplete="current-password" />
+              </div>
+              <div class="field-group">
+                <label>New Password</label>
+                <input type="password" id="newPassword" autocomplete="new-password" />
+              </div>
+              <div class="field-group">
+                <label>Confirm New Password</label>
+                <input type="password" id="confirmPassword" autocomplete="new-password" />
+              </div>
+              <span class="field-err" id="passwordErr"></span>
+              <button type="submit" class="btn-primary">Update Password</button>
+            </form>
+          </div>
+        </div>
+
+      </main>
+    </div>
+
+    <!-- Mobile overlay -->
+    <div id="sidebarOverlay"></div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast"></div>
+
+  <script src="/admin/js/admin.js"></script>
+</body>
+</html>

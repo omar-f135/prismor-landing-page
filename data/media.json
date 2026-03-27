@@ -1,0 +1,10 @@
+[
+  { "id": "pm1", "label": "Classic Matte Black", "type": "image", "gradient": "linear-gradient(148deg, #1a1a2e 0%, #16213e 45%, #0a0a14 100%)", "isBestseller": true, "src": null },
+  { "id": "pm2", "label": "Amber Tortoise", "type": "image", "gradient": "linear-gradient(148deg, #3d1f0a 0%, #7a3a12 45%, #c07030 100%)", "isBestseller": false, "src": null },
+  { "id": "pm3", "label": "Ocean Blue Polarized", "type": "image", "gradient": "linear-gradient(148deg, #0f2027 0%, #1e4d6b 50%, #2c5364 100%)", "isBestseller": false, "src": null },
+  { "id": "pm4", "label": "Desert Gold", "type": "image", "gradient": "linear-gradient(148deg, #4a3200 0%, #9a7020 45%, #c9a030 100%)", "isBestseller": false, "src": null },
+  { "id": "pm5", "label": "Smoke Mirror", "type": "image", "gradient": "linear-gradient(148deg, #252525 0%, #484848 50%, #1a1a1a 100%)", "isBestseller": false, "src": null },
+  { "id": "pm6", "label": "Forest Tint", "type": "image", "gradient": "linear-gradient(148deg, #0d2e1a 0%, #1a5c38 50%, #0a2014 100%)", "isBestseller": false, "src": null },
+  { "id": "pm7", "label": "Lifestyle Film", "type": "video", "gradient": "linear-gradient(148deg, #1e1e2e 0%, #2d2d44 50%, #12121e 100%)", "isBestseller": false, "src": null },
+  { "id": "pm8", "label": "Campaign Story", "type": "video", "gradient": "linear-gradient(148deg, #1a0a0a 0%, #3a1818 50%, #1a0a0a 100%)", "isBestseller": false, "src": null }
+]
