@@ -1,0 +1,8 @@
+# Dependencies
+node_modules/
+
+# Uploaded media files (ephemeral on Render — too large for git)
+uploads/
+
+# macOS
+.DS_Store

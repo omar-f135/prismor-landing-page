@@ -243,6 +243,13 @@ app.put('/api/settings/password', requireAuth, (req, res) => {
    CATCH-ALL
 ══════════════════════════════════════════════════════ */
 app.get('*', (req, res) => {
+  // If requesting a file with an extension (css, js, png, etc.) that wasn't
+  // found by express.static, return 404 — do NOT serve index.html as the
+  // response, otherwise the browser receives HTML content for CSS/JS requests.
+  const ext = path.extname(req.path);
+  if (ext && ext !== '.html') {
+    return res.status(404).end();
+  }
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
