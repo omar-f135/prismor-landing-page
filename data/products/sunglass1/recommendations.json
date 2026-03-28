@@ -9,7 +9,8 @@
     "badge": "Popular",
     "badgeColor": "#ff8401",
     "gradient": "linear-gradient(148deg, #232526 0%, #414345 100%)",
-    "link": "https://prismorglasses.com/product/woody-transparent/"
+    "link": "https://prismorglasses.com/product/woody-transparent/",
+    "imageSrc": null
   },
   {
     "id": "r2",
@@ -21,7 +22,8 @@
     "badge": "",
     "badgeColor": "",
     "gradient": "linear-gradient(148deg, #8e9eab 0%, #ccd6dd 100%)",
-    "link": ""
+    "link": "",
+    "imageSrc": null
   },
   {
     "id": "r3",
@@ -33,7 +35,8 @@
     "badge": "New",
     "badgeColor": "#2e9e4f",
     "gradient": "linear-gradient(148deg, #6b3a1a 0%, #c07832 100%)",
-    "link": ""
+    "link": "",
+    "imageSrc": null
   },
   {
     "id": "r4",
@@ -45,7 +48,8 @@
     "badge": "",
     "badgeColor": "",
     "gradient": "linear-gradient(148deg, #3a7bd5 0%, #3a9fd5 100%)",
-    "link": ""
+    "link": "",
+    "imageSrc": null
   },
   {
     "id": "r5",
@@ -57,7 +61,8 @@
     "badge": "Sport",
     "badgeColor": "#1a6bff",
     "gradient": "linear-gradient(148deg, #1c2130 0%, #3a4464 100%)",
-    "link": ""
+    "link": "",
+    "imageSrc": null
   },
   {
     "id": "r6",
@@ -69,7 +74,8 @@
     "badge": "",
     "badgeColor": "",
     "gradient": "linear-gradient(148deg, #c94b4b 0%, #4b134f 100%)",
-    "link": ""
+    "link": "",
+    "imageSrc": null
   },
   {
     "id": "r7",
@@ -81,7 +87,8 @@
     "badge": "",
     "badgeColor": "",
     "gradient": "linear-gradient(148deg, #4e2a0a 0%, #8a5228 100%)",
-    "link": ""
+    "link": "",
+    "imageSrc": null
   },
   {
     "id": "r8",
@@ -93,7 +100,8 @@
     "badge": "Sport",
     "badgeColor": "#1a6bff",
     "gradient": "linear-gradient(148deg, #0050c8 0%, #0090e0 100%)",
-    "link": ""
+    "link": "",
+    "imageSrc": null
   },
   {
     "id": "r9",
@@ -105,7 +113,8 @@
     "badge": "",
     "badgeColor": "",
     "gradient": "linear-gradient(148deg, #2c4a1a 0%, #5a8030 100%)",
-    "link": ""
+    "link": "",
+    "imageSrc": null
   },
   {
     "id": "r10",
@@ -117,6 +126,7 @@
     "badge": "Premium",
     "badgeColor": "#ff8401",
     "gradient": "linear-gradient(148deg, #0a0a0a 0%, #2a2a2a 100%)",
-    "link": ""
+    "link": "",
+    "imageSrc": null
   }
 ]

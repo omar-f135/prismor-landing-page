@@ -9,13 +9,34 @@ let productMedia = [];
 let recommendations = [];
 let discount = 0;
 let afterDiscount = 0;
+let PRODUCT_SLUG = '';
+
+/* ─── SLUG DETECTION ──────────────────────────────────────────── */
+async function detectSlug() {
+  const parts = window.location.pathname.split('/').filter(Boolean);
+  let slug = parts[0] || '';
+  // Ignore known non-product paths
+  if (!slug || slug === 'admin') {
+    // Fetch first available product and redirect
+    try {
+      const products = await fetch('/api/products').then(r => r.json());
+      if (products.length > 0) {
+        slug = products[0].slug;
+        window.history.replaceState({}, '', `/${slug}`);
+      }
+    } catch {}
+  }
+  return slug;
+}
 
 /* ─── DATA LOADING ────────────────────────────────────────────── */
 async function loadData() {
+  PRODUCT_SLUG = await detectSlug();
+  if (!PRODUCT_SLUG) return; // No products yet
   const [product, media, recs] = await Promise.all([
-    fetch('/api/product').then(r => r.json()),
-    fetch('/api/media').then(r => r.json()),
-    fetch('/api/recommendations').then(r => r.json()),
+    fetch(`/api/products/${PRODUCT_SLUG}/product`).then(r => r.json()),
+    fetch(`/api/products/${PRODUCT_SLUG}/media`).then(r => r.json()),
+    fetch(`/api/products/${PRODUCT_SLUG}/recommendations`).then(r => r.json()),
   ]);
   CONFIG = product;
   productMedia = media;
@@ -587,13 +608,14 @@ function initOrderConfirm() {
 
     const orderData = {
       orderId,
-      name:       document.getElementById('custName').value.trim(),
-      phone:      document.getElementById('custPhone').value.trim(),
-      address:    document.getElementById('custAddress').value.trim(),
-      delivery:   deliveryChoice,
-      mediaLabel: productMedia[currentMediaIndex]?.label || '',
-      product:    CONFIG.productName,
-      total:      afterDiscount + deliveryCharge,
+      name:         document.getElementById('custName').value.trim(),
+      phone:        document.getElementById('custPhone').value.trim(),
+      address:      document.getElementById('custAddress').value.trim(),
+      delivery:     deliveryChoice,
+      mediaLabel:   productMedia[currentMediaIndex]?.label || '',
+      product:      CONFIG.productName,
+      productSlug:  PRODUCT_SLUG,
+      total:        afterDiscount + deliveryCharge,
     };
 
     // Brief button feedback
@@ -629,7 +651,9 @@ function buildRecGrid() {
     card.innerHTML = `
       <div class="rec-card-img" style="background:${item.gradient};">
         ${item.badge ? `<span class="rec-badge" style="background:${item.badgeColor};">${item.badge}</span>` : ''}
-        ${glassesSVG(140)}
+        ${item.imageSrc
+          ? `<img src="${item.imageSrc}" alt="${item.name}" loading="lazy" onerror="this.style.display='none'" />`
+          : `<span class="rec-glasses-svg">${glassesSVG(140)}</span>`}
       </div>
       <div class="rec-card-body">
         <p class="rec-color-name">

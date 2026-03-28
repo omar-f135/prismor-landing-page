@@ -45,11 +45,16 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
           Dashboard
         </a></li>
-        <li><a href="#" class="nav-link" data-page="product">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-          Product
+        <li><a href="#" class="nav-link" data-page="products">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2z"/></svg>
+          Products
         </a></li>
-        <li><a href="#" class="nav-link" data-page="media">
+        <li class="nav-separator" id="perProductSep" style="display:none"></li>
+        <li id="navProduct" style="display:none"><a href="#" class="nav-link" data-page="product">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+          Product Details
+        </a></li>
+        <li id="navMedia" style="display:none"><a href="#" class="nav-link" data-page="media">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
           Media
         </a></li>
@@ -58,7 +63,7 @@
           Orders
           <span class="badge-count" id="pendingBadge" style="display:none"></span>
         </a></li>
-        <li><a href="#" class="nav-link" data-page="recommendations">
+        <li id="navRecs" style="display:none"><a href="#" class="nav-link" data-page="recommendations">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
           Recommendations
         </a></li>
@@ -83,7 +88,8 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
         </button>
         <h2 id="pageTitle">Dashboard</h2>
-        <a href="/" target="_blank" class="topbar-preview">
+        <span id="currentProductChip" class="product-chip" style="display:none"></span>
+        <a href="/" target="_blank" class="topbar-preview" id="viewPageBtn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           View Page
         </a>
@@ -91,6 +97,38 @@
 
       <!-- Page content -->
       <main id="pageContent">
+
+        <!-- ── PRODUCTS ── -->
+        <div class="page" id="page-products" style="display:none">
+          <div class="card">
+            <div class="card-head">
+              <h3>All Products</h3>
+              <button class="btn-primary btn-sm" id="showAddProductBtn">+ New Product</button>
+            </div>
+            <div id="productsList"></div>
+          </div>
+
+          <!-- New product form -->
+          <div class="card mt-20" id="addProductCard" style="display:none">
+            <div class="card-head">
+              <h3>Create New Product</h3>
+              <button class="btn-ghost btn-sm" id="cancelAddProductBtn">Cancel</button>
+            </div>
+            <form id="addProductForm" class="form-grid">
+              <div class="field-group">
+                <label>URL Slug</label>
+                <input type="text" id="newSlug" placeholder="e.g. sunglass2" required />
+                <span class="field-hint">Used in the URL: yoursite.com/<strong>sunglass2</strong>. Lowercase letters, numbers, hyphens only.</span>
+              </div>
+              <div class="field-group">
+                <label>Product Name</label>
+                <input type="text" id="newProductName" placeholder="e.g. Aurora Pro · Polarized UV400" />
+              </div>
+              <span class="field-err" id="addProductErr"></span>
+              <button type="submit" class="btn-primary">Create Product</button>
+            </form>
+          </div>
+        </div>
 
         <!-- ── DASHBOARD ── -->
         <div class="page" id="page-dashboard">
@@ -304,6 +342,15 @@
               <div class="field-group">
                 <label>Background Gradient (CSS)</label>
                 <input type="text" id="rGradient" placeholder="linear-gradient(148deg, #232526 0%, #414345 100%)" />
+              </div>
+              <div class="field-group">
+                <label>Product Image</label>
+                <div id="rImagePreviewWrap" style="display:none;margin-bottom:8px;">
+                  <img id="rImagePreview" src="" alt="Current image" style="height:80px;border-radius:6px;object-fit:cover;border:1px solid #e8e8e4;" />
+                  <button type="button" class="btn-danger btn-sm" id="removeRecImageBtn" style="margin-top:6px;">Remove image</button>
+                </div>
+                <input type="file" id="rImage" accept="image/*" />
+                <span class="field-hint">PNG, JPG, WebP — shown on the landing page card.</span>
               </div>
               <button type="submit" class="btn-primary" id="recSubmitBtn">Save Product</button>
             </form>

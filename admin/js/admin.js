@@ -1,19 +1,18 @@
 /* ═══════════════════════════════════════════════════════════════
-   PRISMOR Admin Panel — Vanilla JS
+   PRISMOR Admin Panel — Multi-product edition
 ═══════════════════════════════════════════════════════════════ */
 
 /* ─── STATE ──────────────────────────────────────────────────── */
-let token = localStorage.getItem('adminToken') || '';
-let currentPage = 'dashboard';
-let allOrders = [];
-let editingRecId = null;
+let token              = localStorage.getItem('adminToken') || '';
+let currentPage        = 'dashboard';
+let currentProductSlug = localStorage.getItem('adminCurrentProduct') || '';
+let allOrders          = [];
+let editingRecId       = null;
+let removeRecImage     = false;
 
 /* ─── API HELPER ─────────────────────────────────────────────── */
 async function api(method, path, body) {
-  const opts = {
-    method,
-    headers: { Authorization: `Bearer ${token}` },
-  };
+  const opts = { method, headers: { Authorization: `Bearer ${token}` } };
   if (body && !(body instanceof FormData)) {
     opts.headers['Content-Type'] = 'application/json';
     opts.body = JSON.stringify(body);
@@ -45,8 +44,7 @@ async function checkAuth() {
   const data = await fetch('/api/auth/check', {
     headers: { Authorization: `Bearer ${token}` },
   }).then(r => r.json()).catch(() => ({ valid: false }));
-  if (data.valid) showApp();
-  else showLogin();
+  data.valid ? showApp() : showLogin();
 }
 
 function showLogin() {
@@ -100,68 +98,83 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
   forceLogout();
 });
 
+/* ─── CURRENT PRODUCT HELPERS ────────────────────────────────── */
+const PER_PRODUCT_PAGES = ['product', 'media', 'recommendations'];
+
+function setCurrentProduct(slug, name) {
+  currentProductSlug = slug;
+  localStorage.setItem('adminCurrentProduct', slug);
+
+  // Show/hide per-product nav links
+  const show = !!slug;
+  document.getElementById('perProductSep').style.display  = show ? '' : 'none';
+  document.getElementById('navProduct').style.display     = show ? '' : 'none';
+  document.getElementById('navMedia').style.display       = show ? '' : 'none';
+  document.getElementById('navRecs').style.display        = show ? '' : 'none';
+
+  // Update chip
+  const chip = document.getElementById('currentProductChip');
+  if (slug) {
+    chip.textContent = `Editing: ${slug}`;
+    chip.style.display = '';
+  } else {
+    chip.style.display = 'none';
+  }
+
+  // Update "View Page" link
+  const viewBtn = document.getElementById('viewPageBtn');
+  if (viewBtn) viewBtn.href = slug ? `/${slug}` : '/';
+}
+
+function requireProduct() {
+  if (!currentProductSlug) {
+    document.getElementById('pageContent').querySelectorAll('.page').forEach(p => p.style.display = 'none');
+    document.getElementById(`page-${currentPage}`).style.display = '';
+    document.getElementById(`page-${currentPage}`).innerHTML = `
+      <div class="card" style="padding:32px;text-align:center;">
+        <p style="color:#888;font-size:14px;margin-bottom:16px;">Select a product first to manage this section.</p>
+        <button class="btn-primary" onclick="navigate('products')">Go to Products</button>
+      </div>`;
+    return false;
+  }
+  return true;
+}
+
 /* ─── NAVIGATION ─────────────────────────────────────────────── */
 const PAGE_TITLES = {
-  dashboard: 'Dashboard',
-  product: 'Product',
-  media: 'Media',
-  orders: 'Orders',
-  recommendations: 'Recommendations',
-  settings: 'Settings',
+  dashboard: 'Dashboard', products: 'Products',
+  product: 'Product Details', media: 'Media',
+  orders: 'Orders', recommendations: 'Recommendations', settings: 'Settings',
 };
 
 function navigate(page) {
   currentPage = page;
-
-  // Update nav links
-  document.querySelectorAll('.nav-link').forEach(el => {
-    el.classList.toggle('active', el.dataset.page === page);
-  });
-
-  // Show correct page
-  document.querySelectorAll('.page').forEach(el => {
-    el.style.display = el.id === `page-${page}` ? '' : 'none';
-  });
-
-  // Update title
+  document.querySelectorAll('.nav-link').forEach(el => el.classList.toggle('active', el.dataset.page === page));
+  document.querySelectorAll('.page').forEach(el => { el.style.display = el.id === `page-${page}` ? '' : 'none'; });
   document.getElementById('pageTitle').textContent = PAGE_TITLES[page] || page;
-
-  // Close mobile sidebar
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sidebarOverlay').classList.remove('open');
-
-  // Load page data
   loadPage(page);
 }
 
 async function loadPage(page) {
   switch (page) {
-    case 'dashboard':      await loadDashboard(); break;
-    case 'product':        await loadProduct();   break;
+    case 'dashboard':      await loadDashboard();  break;
+    case 'products':       await loadProductsList(); break;
+    case 'product':        await loadProduct();    break;
     case 'media':          await loadMedia();      break;
     case 'orders':         await loadOrders();     break;
     case 'recommendations': await loadRecs();      break;
   }
 }
 
-// Nav link clicks
 document.querySelectorAll('.nav-link').forEach(el => {
-  el.addEventListener('click', (e) => {
-    e.preventDefault();
-    navigate(el.dataset.page);
-  });
+  el.addEventListener('click', (e) => { e.preventDefault(); navigate(el.dataset.page); });
 });
-
-// Dashboard "view all" link
 document.addEventListener('click', (e) => {
   const link = e.target.closest('[data-page]');
-  if (link && !link.classList.contains('nav-link')) {
-    e.preventDefault();
-    navigate(link.dataset.page);
-  }
+  if (link && !link.classList.contains('nav-link')) { e.preventDefault(); navigate(link.dataset.page); }
 });
-
-// Mobile menu
 document.getElementById('menuToggle').addEventListener('click', () => {
   document.getElementById('sidebar').classList.toggle('open');
   document.getElementById('sidebarOverlay').classList.toggle('open');
@@ -175,9 +188,7 @@ document.getElementById('sidebarOverlay').addEventListener('click', () => {
    DASHBOARD
 ═══════════════════════════════════════════════════════════════ */
 async function loadDashboard() {
-  try {
-    allOrders = await api('GET', '/api/orders') || [];
-  } catch { allOrders = []; }
+  try { allOrders = await api('GET', '/api/orders') || []; } catch { allOrders = []; }
 
   const total     = allOrders.length;
   const pending   = allOrders.filter(o => o.status === 'pending').length;
@@ -189,30 +200,23 @@ async function loadDashboard() {
   document.getElementById('statConfirmed').textContent = confirmed;
   document.getElementById('statDelivered').textContent = delivered;
 
-  // Pending badge on nav
   const badge = document.getElementById('pendingBadge');
   if (pending > 0) { badge.textContent = pending; badge.style.display = ''; }
   else badge.style.display = 'none';
 
-  // Recent 5 orders
   const recent = allOrders.slice(0, 5);
   const container = document.getElementById('recentOrdersTable');
-  if (!recent.length) {
-    container.innerHTML = '<p class="table-empty">No orders yet.</p>';
-    return;
-  }
+  if (!recent.length) { container.innerHTML = '<p class="table-empty">No orders yet.</p>'; return; }
   container.innerHTML = `
     <div class="table-wrap">
       <table class="data-table">
-        <thead><tr>
-          <th>Order ID</th><th>Name</th><th>Phone</th><th>Total</th><th>Status</th><th>Date</th>
-        </tr></thead>
+        <thead><tr><th>Order ID</th><th>Product</th><th>Name</th><th>Phone</th><th>Total</th><th>Status</th><th>Date</th></tr></thead>
         <tbody>
           ${recent.map(o => `
             <tr>
-              <td><strong>${o.orderId}</strong></td>
-              <td>${escHtml(o.name)}</td>
-              <td>${escHtml(o.phone)}</td>
+              <td><strong>${escHtml(o.orderId)}</strong></td>
+              <td><span class="product-slug-badge">${escHtml(o.productSlug || '—')}</span></td>
+              <td>${escHtml(o.name)}</td><td>${escHtml(o.phone)}</td>
               <td>৳ ${Number(o.total || 0).toLocaleString()}</td>
               <td>${statusBadge(o.status)}</td>
               <td>${formatDate(o.createdAt)}</td>
@@ -223,101 +227,156 @@ async function loadDashboard() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   PRODUCT
+   PRODUCTS LIST
+═══════════════════════════════════════════════════════════════ */
+async function loadProductsList() {
+  let products;
+  try { products = await api('GET', '/api/products') || []; }
+  catch { toast('Failed to load products', 'error'); return; }
+
+  const container = document.getElementById('productsList');
+  if (!products.length) {
+    container.innerHTML = '<p class="table-empty">No products yet. Create your first one below.</p>';
+    document.getElementById('addProductCard').style.display = '';
+    return;
+  }
+
+  container.innerHTML = products.map(p => `
+    <div class="product-list-item">
+      <span class="product-slug-badge">${escHtml(p.slug)}</span>
+      <div>
+        <p class="product-list-name">${escHtml(p.name)}</p>
+        <p class="product-list-url">yoursite.com/${escHtml(p.slug)}</p>
+      </div>
+      <div class="product-list-actions">
+        <a href="/${escHtml(p.slug)}" target="_blank" class="btn-secondary btn-sm">Preview ↗</a>
+        <button class="btn-primary btn-sm" onclick="selectProduct('${escHtml(p.slug)}','${escHtml(p.name)}')">Manage</button>
+        <button class="btn-danger btn-sm" onclick="deleteProduct('${escHtml(p.slug)}','${escHtml(p.name)}')">Delete</button>
+      </div>
+    </div>`).join('');
+}
+
+function selectProduct(slug, name) {
+  setCurrentProduct(slug, name);
+  navigate('product');
+  toast(`Now editing: ${slug}`);
+}
+
+async function deleteProduct(slug, name) {
+  if (!confirm(`Delete product "${name}" (/${slug})?\n\nThis will permanently remove all its data and uploads.`)) return;
+  try {
+    await api('DELETE', `/api/products/${slug}`);
+    if (currentProductSlug === slug) setCurrentProduct('', '');
+    toast('Product deleted.');
+    await loadProductsList();
+  } catch (err) {
+    toast(err.message || 'Delete failed', 'error');
+  }
+}
+
+// Add product form
+document.getElementById('showAddProductBtn').addEventListener('click', () => {
+  const card = document.getElementById('addProductCard');
+  card.style.display = card.style.display === 'none' ? '' : 'none';
+});
+document.getElementById('cancelAddProductBtn').addEventListener('click', () => {
+  document.getElementById('addProductCard').style.display = 'none';
+});
+document.getElementById('addProductForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const slug = document.getElementById('newSlug').value.trim().toLowerCase();
+  const name = document.getElementById('newProductName').value.trim();
+  const errEl = document.getElementById('addProductErr');
+  errEl.textContent = '';
+  const btn = e.submitter;
+  btn.disabled = true;
+  try {
+    await api('POST', '/api/products', { slug, productName: name || slug });
+    toast(`Product "${slug}" created!`);
+    e.target.reset();
+    document.getElementById('addProductCard').style.display = 'none';
+    await loadProductsList();
+  } catch (err) {
+    errEl.textContent = err.message || 'Create failed.';
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   PRODUCT DETAILS
 ═══════════════════════════════════════════════════════════════ */
 async function loadProduct() {
+  if (!requireProduct()) return;
   let product;
-  try { product = await api('GET', '/api/product'); }
-  catch { toast('Failed to load product data', 'error'); return; }
+  try { product = await api('GET', `/api/products/${currentProductSlug}/product`); }
+  catch { toast('Failed to load product', 'error'); return; }
 
-  document.getElementById('pName').value       = product.productName || '';
-  document.getElementById('pPrice').value      = product.originalPrice || '';
-  document.getElementById('pDiscount').value   = product.discountPct || '';
-  document.getElementById('pDeliveryIn').value = product.deliveryInside || '';
+  document.getElementById('pName').value        = product.productName || '';
+  document.getElementById('pPrice').value       = product.originalPrice || '';
+  document.getElementById('pDiscount').value    = product.discountPct || '';
+  document.getElementById('pDeliveryIn').value  = product.deliveryInside || '';
   document.getElementById('pDeliveryOut').value = product.deliveryOutside || '';
-  document.getElementById('pWhatsapp').value   = product.whatsapp || '';
-  document.getElementById('pWebsite').value    = product.website || '';
-
+  document.getElementById('pWhatsapp').value    = product.whatsapp || '';
+  document.getElementById('pWebsite').value     = product.website || '';
   updatePricePreview();
   renderSpecEditor(product.specs || []);
 }
 
 function updatePricePreview() {
-  const price    = parseFloat(document.getElementById('pPrice').value) || 0;
-  const discount = parseFloat(document.getElementById('pDiscount').value) || 0;
-  const inside   = parseFloat(document.getElementById('pDeliveryIn').value) || 0;
-  if (!price) { document.getElementById('pricePreview').classList.remove('visible'); return; }
-  const disc = Math.round(price * discount / 100);
-  const after = price - disc;
-  document.getElementById('pricePreview').classList.add('visible');
-  document.getElementById('pricePreview').innerHTML =
-    `Price: ৳${price.toLocaleString()} → after ${discount}% discount: <strong>৳${after.toLocaleString()}</strong> ·
-     Total COD (Inside Dhaka): <strong>৳${(after + inside).toLocaleString()}</strong>`;
+  const price = parseFloat(document.getElementById('pPrice').value) || 0;
+  const disc  = parseFloat(document.getElementById('pDiscount').value) || 0;
+  const inside = parseFloat(document.getElementById('pDeliveryIn').value) || 0;
+  const prev = document.getElementById('pricePreview');
+  if (!price) { prev.classList.remove('visible'); return; }
+  const discAmt = Math.round(price * disc / 100);
+  prev.classList.add('visible');
+  prev.innerHTML = `Price: ৳${price.toLocaleString()} → after ${disc}% discount: <strong>৳${(price - discAmt).toLocaleString()}</strong> · Total COD (Inside Dhaka): <strong>৳${(price - discAmt + inside).toLocaleString()}</strong>`;
 }
-
-['pPrice', 'pDiscount', 'pDeliveryIn', 'pDeliveryOut'].forEach(id => {
-  document.getElementById(id)?.addEventListener('input', updatePricePreview);
-});
+['pPrice', 'pDiscount', 'pDeliveryIn', 'pDeliveryOut'].forEach(id =>
+  document.getElementById(id)?.addEventListener('input', updatePricePreview));
 
 document.getElementById('productForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const btn = e.submitter;
-  btn.disabled = true;
-  btn.textContent = 'Saving…';
+  if (!requireProduct()) return;
+  const btn = e.submitter; btn.disabled = true; btn.textContent = 'Saving…';
   try {
-    await api('PUT', '/api/product', {
-      productName:    document.getElementById('pName').value.trim(),
-      originalPrice:  parseFloat(document.getElementById('pPrice').value),
-      discountPct:    parseFloat(document.getElementById('pDiscount').value),
-      deliveryInside: parseFloat(document.getElementById('pDeliveryIn').value),
-      deliveryOutside:parseFloat(document.getElementById('pDeliveryOut').value),
-      whatsapp:       document.getElementById('pWhatsapp').value.trim(),
-      website:        document.getElementById('pWebsite').value.trim(),
+    await api('PUT', `/api/products/${currentProductSlug}/product`, {
+      productName:     document.getElementById('pName').value.trim(),
+      originalPrice:   parseFloat(document.getElementById('pPrice').value),
+      discountPct:     parseFloat(document.getElementById('pDiscount').value),
+      deliveryInside:  parseFloat(document.getElementById('pDeliveryIn').value),
+      deliveryOutside: parseFloat(document.getElementById('pDeliveryOut').value),
+      whatsapp:        document.getElementById('pWhatsapp').value.trim(),
+      website:         document.getElementById('pWebsite').value.trim(),
     });
     toast('Product details saved!');
-  } catch (err) {
-    toast(err.message || 'Save failed', 'error');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Save Product Details';
-  }
+  } catch (err) { toast(err.message || 'Save failed', 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Save Product Details'; }
 });
 
 /* ── Spec Editor ─────────────────────────────────────── */
 function renderSpecEditor(specs) {
-  const container = document.getElementById('specEditor');
-  container.innerHTML = `<div class="spec-table" id="specRows">
-    ${specs.map((s, i) => specRowHTML(s.key, s.val, i)).join('')}
+  document.getElementById('specEditor').innerHTML = `<div class="spec-table" id="specRows">
+    ${specs.map((s, i) => `<div class="spec-row" data-idx="${i}">
+      <input type="text" placeholder="e.g. Lens Type" value="${escHtml(s.key)}" class="spec-key-input" />
+      <input type="text" placeholder="e.g. Polarized CR-39" value="${escHtml(s.val)}" class="spec-val-input" />
+      <button type="button" class="btn-danger" onclick="this.closest('.spec-row').remove()">✕</button>
+    </div>`).join('')}
   </div>`;
 }
-
-function specRowHTML(key, val, i) {
-  return `<div class="spec-row" data-idx="${i}">
-    <input type="text" placeholder="e.g. Lens Type" value="${escHtml(key)}" class="spec-key-input" />
-    <input type="text" placeholder="e.g. Polarized CR-39" value="${escHtml(val)}" class="spec-val-input" />
-    <button type="button" class="btn-danger" onclick="removeSpecRow(this)">✕</button>
-  </div>`;
-}
-
-function removeSpecRow(btn) {
-  btn.closest('.spec-row').remove();
-}
-
 document.getElementById('addSpecBtn').addEventListener('click', () => {
-  const container = document.getElementById('specRows');
-  const idx = container.children.length;
   const row = document.createElement('div');
   row.className = 'spec-row';
-  row.dataset.idx = idx;
   row.innerHTML = `
     <input type="text" placeholder="e.g. Lens Type" class="spec-key-input" />
     <input type="text" placeholder="e.g. Polarized CR-39" class="spec-val-input" />
-    <button type="button" class="btn-danger" onclick="removeSpecRow(this)">✕</button>`;
-  container.appendChild(row);
+    <button type="button" class="btn-danger" onclick="this.closest('.spec-row').remove()">✕</button>`;
+  document.getElementById('specRows').appendChild(row);
   row.querySelector('input').focus();
 });
-
 document.getElementById('saveSpecsBtn').addEventListener('click', async () => {
+  if (!requireProduct()) return;
   const btn = document.getElementById('saveSpecsBtn');
   const specs = [];
   document.querySelectorAll('.spec-row').forEach(row => {
@@ -325,36 +384,29 @@ document.getElementById('saveSpecsBtn').addEventListener('click', async () => {
     const val = row.querySelector('.spec-val-input').value.trim();
     if (key) specs.push({ key, val });
   });
-  btn.disabled = true;
-  btn.textContent = 'Saving…';
+  btn.disabled = true; btn.textContent = 'Saving…';
   try {
-    const product = await api('GET', '/api/product');
-    await api('PUT', '/api/product', { ...product, specs });
+    const product = await api('GET', `/api/products/${currentProductSlug}/product`);
+    await api('PUT', `/api/products/${currentProductSlug}/product`, { ...product, specs });
     toast('Specifications saved!');
-  } catch (err) {
-    toast(err.message || 'Save failed', 'error');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Save Specifications';
-  }
+  } catch (err) { toast(err.message || 'Save failed', 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Save Specifications'; }
 });
 
 /* ═══════════════════════════════════════════════════════════════
    MEDIA
 ═══════════════════════════════════════════════════════════════ */
 async function loadMedia() {
+  if (!requireProduct()) return;
   let media;
-  try { media = await api('GET', '/api/media') || []; }
+  try { media = await api('GET', `/api/products/${currentProductSlug}/media`) || []; }
   catch { toast('Failed to load media', 'error'); return; }
   renderMediaGrid(media);
 }
 
 function renderMediaGrid(media) {
   const grid = document.getElementById('mediaGrid');
-  if (!media.length) {
-    grid.innerHTML = '<p class="media-empty">No media items yet. Upload one below.</p>';
-    return;
-  }
+  if (!media.length) { grid.innerHTML = '<p class="media-empty">No media items. Upload one below.</p>'; return; }
   grid.innerHTML = media.map(item => `
     <div class="media-item" id="mi-${item.id}">
       <div class="media-thumb" style="background:${item.gradient};">
@@ -378,48 +430,35 @@ function renderMediaGrid(media) {
 async function deleteMedia(id) {
   if (!confirm('Delete this media item?')) return;
   try {
-    await api('DELETE', `/api/media/${id}`);
+    await api('DELETE', `/api/products/${currentProductSlug}/media/${id}`);
     document.getElementById(`mi-${id}`)?.remove();
     toast('Media deleted.');
-    // Check if grid is now empty
-    if (!document.querySelector('.media-item')) {
-      document.getElementById('mediaGrid').innerHTML =
-        '<p class="media-empty">No media items yet. Upload one below.</p>';
-    }
-  } catch (err) {
-    toast(err.message || 'Delete failed', 'error');
-  }
+    if (!document.querySelector('.media-item'))
+      document.getElementById('mediaGrid').innerHTML = '<p class="media-empty">No media items. Upload one below.</p>';
+  } catch (err) { toast(err.message || 'Delete failed', 'error'); }
 }
 
 document.getElementById('mediaUploadForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const btn = document.getElementById('uploadMediaBtn');
+  if (!requireProduct()) return;
   const label = document.getElementById('mLabel').value.trim();
   if (!label) { toast('Please enter a label', 'error'); return; }
-
-  btn.disabled = true;
-  btn.textContent = 'Uploading…';
-
+  const btn = document.getElementById('uploadMediaBtn');
+  btn.disabled = true; btn.textContent = 'Uploading…';
   const fd = new FormData();
-  fd.append('label',       label);
-  fd.append('type',        document.getElementById('mType').value);
-  fd.append('gradient',    document.getElementById('mGradient').value.trim() || 'linear-gradient(148deg, #1a1a1a 0%, #3a3a3a 100%)');
+  fd.append('label',        label);
+  fd.append('type',         document.getElementById('mType').value);
+  fd.append('gradient',     document.getElementById('mGradient').value.trim() || 'linear-gradient(148deg, #1a1a1a 0%, #3a3a3a 100%)');
   fd.append('isBestseller', document.getElementById('mBestseller').value);
-
   const file = document.getElementById('mFile').files[0];
   if (file) fd.append('file', file);
-
   try {
-    await api('POST', '/api/media', fd);
+    await api('POST', `/api/products/${currentProductSlug}/media`, fd);
     toast('Media uploaded!');
     e.target.reset();
     await loadMedia();
-  } catch (err) {
-    toast(err.message || 'Upload failed', 'error');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Upload & Add';
-  }
+  } catch (err) { toast(err.message || 'Upload failed', 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Upload & Add'; }
 });
 
 /* ═══════════════════════════════════════════════════════════════
@@ -428,13 +467,10 @@ document.getElementById('mediaUploadForm').addEventListener('submit', async (e) 
 async function loadOrders(filter = '') {
   try { allOrders = await api('GET', '/api/orders') || []; }
   catch { toast('Failed to load orders', 'error'); return; }
-
-  // Update pending badge
   const pending = allOrders.filter(o => o.status === 'pending').length;
   const badge = document.getElementById('pendingBadge');
   if (pending > 0) { badge.textContent = pending; badge.style.display = ''; }
   else badge.style.display = 'none';
-
   renderOrdersTable(filter || document.getElementById('orderSearch')?.value || '');
 }
 
@@ -443,30 +479,28 @@ function renderOrdersTable(search = '') {
     ? allOrders.filter(o =>
         (o.name || '').toLowerCase().includes(search.toLowerCase()) ||
         (o.phone || '').includes(search) ||
-        (o.orderId || '').toLowerCase().includes(search.toLowerCase()))
+        (o.orderId || '').toLowerCase().includes(search.toLowerCase()) ||
+        (o.productSlug || '').toLowerCase().includes(search.toLowerCase()))
     : allOrders;
 
   const container = document.getElementById('ordersTable');
-  if (!filtered.length) {
-    container.innerHTML = `<p class="table-empty">${search ? 'No matching orders.' : 'No orders yet.'}</p>`;
-    return;
-  }
+  if (!filtered.length) { container.innerHTML = `<p class="table-empty">${search ? 'No matching orders.' : 'No orders yet.'}</p>`; return; }
 
   container.innerHTML = `
     <div class="table-wrap">
       <table class="data-table">
         <thead><tr>
-          <th>Order ID</th><th>Name</th><th>Phone</th><th>Address</th>
-          <th>Variant</th><th>Delivery</th><th>Total</th><th>Status</th><th>Date</th><th></th>
+          <th>Order ID</th><th>Product</th><th>Name</th><th>Phone</th><th>Address</th>
+          <th>Delivery</th><th>Total</th><th>Status</th><th>Date</th><th></th>
         </tr></thead>
         <tbody>
           ${filtered.map(o => `
             <tr id="or-${o.orderId}">
               <td><strong>${escHtml(o.orderId)}</strong></td>
+              <td><span class="product-slug-badge">${escHtml(o.productSlug || '—')}</span></td>
               <td>${escHtml(o.name)}</td>
               <td>${escHtml(o.phone)}</td>
               <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escHtml(o.address)}">${escHtml(o.address)}</td>
-              <td style="font-size:12px;color:#666;">${escHtml(o.mediaLabel || '—')}</td>
               <td style="font-size:12px;">${o.delivery === 'outside' ? 'Outside Dhaka' : 'Inside Dhaka'}</td>
               <td><strong>৳ ${Number(o.total || 0).toLocaleString()}</strong></td>
               <td>
@@ -487,20 +521,16 @@ function renderOrdersTable(search = '') {
 
 async function updateOrderStatus(orderId, selectEl) {
   const newStatus = selectEl.value;
-  // Update class immediately
   selectEl.className = `status-select status-${newStatus}`;
   try {
     await api('PUT', `/api/orders/${orderId}`, { status: newStatus });
-    // Refresh pending count
     allOrders = allOrders.map(o => o.orderId === orderId ? { ...o, status: newStatus } : o);
     const pending = allOrders.filter(o => o.status === 'pending').length;
     const badge = document.getElementById('pendingBadge');
     if (pending > 0) { badge.textContent = pending; badge.style.display = ''; }
     else badge.style.display = 'none';
     toast('Status updated.');
-  } catch (err) {
-    toast(err.message || 'Update failed', 'error');
-  }
+  } catch (err) { toast(err.message || 'Update failed', 'error'); }
 }
 
 async function deleteOrder(orderId) {
@@ -510,51 +540,43 @@ async function deleteOrder(orderId) {
     document.getElementById(`or-${orderId}`)?.remove();
     allOrders = allOrders.filter(o => o.orderId !== orderId);
     toast('Order deleted.');
-    if (!document.querySelector('#ordersTable tr[id^="or-"]')) {
-      document.getElementById('ordersTable').innerHTML =
-        '<p class="table-empty">No orders yet.</p>';
-    }
-  } catch (err) {
-    toast(err.message || 'Delete failed', 'error');
-  }
+    if (!document.querySelector('#ordersTable tr[id^="or-"]'))
+      document.getElementById('ordersTable').innerHTML = '<p class="table-empty">No orders yet.</p>';
+  } catch (err) { toast(err.message || 'Delete failed', 'error'); }
 }
 
-// Order search
-document.getElementById('orderSearch')?.addEventListener('input', (e) => {
-  renderOrdersTable(e.target.value);
-});
+document.getElementById('orderSearch')?.addEventListener('input', (e) => renderOrdersTable(e.target.value));
 
 /* ═══════════════════════════════════════════════════════════════
    RECOMMENDATIONS
 ═══════════════════════════════════════════════════════════════ */
 async function loadRecs() {
+  if (!requireProduct()) return;
   let recs;
-  try { recs = await api('GET', '/api/recommendations') || []; }
+  try { recs = await api('GET', `/api/products/${currentProductSlug}/recommendations`) || []; }
   catch { toast('Failed to load recommendations', 'error'); return; }
   renderRecList(recs);
 }
 
 function renderRecList(recs) {
   const container = document.getElementById('recList');
-  if (!recs.length) {
-    container.innerHTML = '<p class="table-empty">No recommendations yet.</p>';
-    return;
-  }
+  if (!recs.length) { container.innerHTML = '<p class="table-empty">No recommendations yet.</p>'; return; }
   container.innerHTML = `
     <div class="table-wrap">
       <table class="rec-list-table">
         <thead><tr>
-          <th>Preview</th><th>Name</th><th>Color</th><th>Price</th><th>Original</th><th>Badge</th><th>Link</th><th></th>
+          <th>Image</th><th>Name</th><th>Color</th><th>Price</th><th>Original</th><th>Badge</th><th>Link</th><th></th>
         </tr></thead>
         <tbody>
           ${recs.map(r => `
             <tr id="rec-${r.id}">
-              <td><span class="rec-gradient-dot" style="background:${r.gradient};"></span></td>
-              <td><strong>${escHtml(r.name)}</strong></td>
               <td>
-                <span class="rec-color-dot" style="background:${r.colorHex};"></span>
-                ${escHtml(r.color)}
+                ${r.imageSrc
+                  ? `<img src="${escHtml(r.imageSrc)}" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid #e8e8e4;" />`
+                  : `<span class="rec-gradient-dot" style="background:${r.gradient};"></span>`}
               </td>
+              <td><strong>${escHtml(r.name)}</strong></td>
+              <td><span class="rec-color-dot" style="background:${r.colorHex};"></span>${escHtml(r.color)}</td>
               <td>৳ ${Number(r.price).toLocaleString()}</td>
               <td style="color:#888;text-decoration:line-through;">৳ ${Number(r.original).toLocaleString()}</td>
               <td>${r.badge ? `<span style="background:${r.badgeColor};color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;">${escHtml(r.badge)}</span>` : '—'}</td>
@@ -571,73 +593,105 @@ function renderRecList(recs) {
 
 document.getElementById('addRecBtn').addEventListener('click', () => {
   editingRecId = null;
-  document.getElementById('recFormTitle').textContent = 'Add Product';
-  document.getElementById('recSubmitBtn').textContent = 'Add Product';
+  removeRecImage = false;
+  document.getElementById('recFormTitle').textContent  = 'Add Product';
+  document.getElementById('recSubmitBtn').textContent  = 'Add Product';
   document.getElementById('recForm').reset();
   document.getElementById('recId').value = '';
+  document.getElementById('rImagePreviewWrap').style.display = 'none';
   document.getElementById('recFormCard').style.display = '';
   document.getElementById('recFormCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
-
 document.getElementById('cancelRecBtn').addEventListener('click', () => {
   document.getElementById('recFormCard').style.display = 'none';
   editingRecId = null;
 });
 
 async function openRecForm(id) {
+  if (!requireProduct()) return;
   let recs;
-  try { recs = await api('GET', '/api/recommendations') || []; }
+  try { recs = await api('GET', `/api/products/${currentProductSlug}/recommendations`) || []; }
   catch { toast('Failed to load data', 'error'); return; }
   const rec = recs.find(r => r.id === id);
   if (!rec) return;
 
   editingRecId = id;
+  removeRecImage = false;
   document.getElementById('recFormTitle').textContent = 'Edit Product';
   document.getElementById('recSubmitBtn').textContent = 'Save Changes';
-  document.getElementById('recId').value        = rec.id;
-  document.getElementById('rName').value         = rec.name || '';
-  document.getElementById('rColor').value        = rec.color || '';
-  document.getElementById('rColorHex').value     = rec.colorHex || '#1a1a1a';
+  document.getElementById('recId').value          = rec.id;
+  document.getElementById('rName').value           = rec.name || '';
+  document.getElementById('rColor').value          = rec.color || '';
+  document.getElementById('rColorHex').value       = rec.colorHex || '#1a1a1a';
   document.getElementById('rColorHexPicker').value = rec.colorHex || '#1a1a1a';
-  document.getElementById('rLink').value         = rec.link || '';
-  document.getElementById('rPrice').value        = rec.price || '';
-  document.getElementById('rOriginal').value     = rec.original || '';
-  document.getElementById('rBadge').value        = rec.badge || '';
-  document.getElementById('rBadgeColor').value   = rec.badgeColor || '#ff8401';
+  document.getElementById('rLink').value           = rec.link || '';
+  document.getElementById('rPrice').value          = rec.price || '';
+  document.getElementById('rOriginal').value       = rec.original || '';
+  document.getElementById('rBadge').value          = rec.badge || '';
+  document.getElementById('rBadgeColor').value     = rec.badgeColor || '#ff8401';
   document.getElementById('rBadgeColorPicker').value = rec.badgeColor || '#ff8401';
-  document.getElementById('rGradient').value     = rec.gradient || '';
+  document.getElementById('rGradient').value       = rec.gradient || '';
+
+  // Show existing image preview
+  const previewWrap = document.getElementById('rImagePreviewWrap');
+  const preview     = document.getElementById('rImagePreview');
+  if (rec.imageSrc) {
+    preview.src = rec.imageSrc;
+    previewWrap.style.display = '';
+  } else {
+    previewWrap.style.display = 'none';
+  }
 
   document.getElementById('recFormCard').style.display = '';
   document.getElementById('recFormCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+document.getElementById('removeRecImageBtn')?.addEventListener('click', () => {
+  removeRecImage = true;
+  document.getElementById('rImagePreviewWrap').style.display = 'none';
+});
+
 document.getElementById('recForm').addEventListener('submit', async (e) => {
   e.preventDefault();
+  if (!requireProduct()) return;
   const btn = document.getElementById('recSubmitBtn');
   btn.disabled = true;
 
-  const payload = {
-    name:       document.getElementById('rName').value.trim(),
-    color:      document.getElementById('rColor').value.trim(),
-    colorHex:   document.getElementById('rColorHex').value.trim(),
-    link:       document.getElementById('rLink').value.trim(),
-    price:      parseFloat(document.getElementById('rPrice').value),
-    original:   parseFloat(document.getElementById('rOriginal').value),
-    badge:      document.getElementById('rBadge').value.trim(),
-    badgeColor: document.getElementById('rBadgeColor').value.trim(),
-    gradient:   document.getElementById('rGradient').value.trim() || 'linear-gradient(148deg, #232526 0%, #414345 100%)',
-  };
+  const fd = new FormData();
+  fd.append('name',       document.getElementById('rName').value.trim());
+  fd.append('color',      document.getElementById('rColor').value.trim());
+  fd.append('colorHex',   document.getElementById('rColorHex').value.trim());
+  fd.append('link',       document.getElementById('rLink').value.trim());
+  fd.append('price',      document.getElementById('rPrice').value);
+  fd.append('original',   document.getElementById('rOriginal').value);
+  fd.append('badge',      document.getElementById('rBadge').value.trim());
+  fd.append('badgeColor', document.getElementById('rBadgeColor').value.trim());
+  fd.append('gradient',   document.getElementById('rGradient').value.trim() || 'linear-gradient(148deg, #232526 0%, #414345 100%)');
+  if (removeRecImage) fd.append('removeImage', 'true');
+
+  const imageFile = document.getElementById('rImage').files[0];
+  if (imageFile) fd.append('imageSrc', imageFile);
 
   try {
     if (editingRecId) {
-      await api('PUT', `/api/recommendations/${editingRecId}`, payload);
+      // Handle removeImage on server side — send as PUT with FormData
+      if (removeRecImage && !imageFile) {
+        // No new file, just patch imageSrc to null via JSON
+        const jsonPayload = {};
+        fd.forEach((v, k) => { if (k !== 'removeImage') jsonPayload[k] = v; });
+        jsonPayload.imageSrc = null;
+        await api('PUT', `/api/products/${currentProductSlug}/recommendations/${editingRecId}`, jsonPayload);
+      } else {
+        await api('PUT', `/api/products/${currentProductSlug}/recommendations/${editingRecId}`, fd);
+      }
       toast('Product updated!');
     } else {
-      await api('POST', '/api/recommendations', payload);
+      await api('POST', `/api/products/${currentProductSlug}/recommendations`, fd);
       toast('Product added!');
     }
     document.getElementById('recFormCard').style.display = 'none';
     editingRecId = null;
+    removeRecImage = false;
     await loadRecs();
   } catch (err) {
     toast(err.message || 'Save failed', 'error');
@@ -649,12 +703,10 @@ document.getElementById('recForm').addEventListener('submit', async (e) => {
 async function deleteRec(id) {
   if (!confirm('Delete this recommendation?')) return;
   try {
-    await api('DELETE', `/api/recommendations/${id}`);
+    await api('DELETE', `/api/products/${currentProductSlug}/recommendations/${id}`);
     document.getElementById(`rec-${id}`)?.remove();
     toast('Deleted.');
-  } catch (err) {
-    toast(err.message || 'Delete failed', 'error');
-  }
+  } catch (err) { toast(err.message || 'Delete failed', 'error'); }
 }
 
 // Color picker sync
@@ -662,9 +714,7 @@ function syncColorPicker(pickerId, textId) {
   const picker = document.getElementById(pickerId);
   const text   = document.getElementById(textId);
   picker?.addEventListener('input', () => { text.value = picker.value; });
-  text?.addEventListener('input',   () => {
-    if (/^#[0-9a-fA-F]{6}$/.test(text.value)) picker.value = text.value;
-  });
+  text?.addEventListener('input',   () => { if (/^#[0-9a-fA-F]{6}$/.test(text.value)) picker.value = text.value; });
 }
 syncColorPicker('rColorHexPicker',   'rColorHex');
 syncColorPicker('rBadgeColorPicker', 'rBadgeColor');
@@ -679,31 +729,22 @@ document.getElementById('passwordForm').addEventListener('submit', async (e) => 
   const confirm  = document.getElementById('confirmPassword').value;
   const errEl    = document.getElementById('passwordErr');
   errEl.textContent = '';
-
   if (next !== confirm) { errEl.textContent = 'Passwords do not match.'; return; }
   if (next.length < 6)  { errEl.textContent = 'Password must be at least 6 characters.'; return; }
-
-  // Verify current password by attempting login
   const check = await fetch('/api/auth/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ password: current }),
   }).then(r => r.json()).catch(() => ({}));
-
   if (!check.token) { errEl.textContent = 'Current password is incorrect.'; return; }
-
-  const btn = e.submitter;
-  btn.disabled = true;
+  const btn = e.submitter; btn.disabled = true;
   try {
     await api('PUT', '/api/settings/password', { newPassword: next });
-    toast('Password updated! Please log in again.');
+    toast('Password updated! Logging out…');
     e.target.reset();
     setTimeout(forceLogout, 2000);
   } catch (err) {
     errEl.textContent = err.message || 'Update failed.';
-  } finally {
-    btn.disabled = false;
-  }
+  } finally { btn.disabled = false; }
 });
 
 /* ═══════════════════════════════════════════════════════════════
@@ -712,20 +753,16 @@ document.getElementById('passwordForm').addEventListener('submit', async (e) => 
 function escHtml(str) {
   return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-
 function formatDate(iso) {
   if (!iso) return '—';
-  const d = new Date(iso);
-  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
-
 function statusBadge(status) {
   const labels = { pending: 'Pending', confirmed: 'Confirmed', delivered: 'Delivered', cancelled: 'Cancelled' };
   return `<span class="status-select status-${status}" style="pointer-events:none;font-size:11px;">${labels[status] || status}</span>`;
 }
-
 function glassesThumbSVG() {
-  return `<svg width="64" height="35" viewBox="0 0 180 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  return `<svg width="64" height="35" viewBox="0 0 180 100" fill="none">
     <path d="M4 50 Q20 20 38 36" stroke="rgba(255,255,255,.3)" stroke-width="3" stroke-linecap="round"/>
     <path d="M142 36 Q160 20 176 50" stroke="rgba(255,255,255,.3)" stroke-width="3" stroke-linecap="round"/>
     <rect x="18" y="30" width="58" height="42" rx="18" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.3)" stroke-width="3"/>
@@ -735,4 +772,6 @@ function glassesThumbSVG() {
 }
 
 /* ─── BOOT ───────────────────────────────────────────────────── */
+// Restore current product from localStorage
+setCurrentProduct(currentProductSlug, '');
 checkAuth();
