@@ -1,0 +1,9 @@
+[
+  {
+    "id": "u_superuser",
+    "email": "omar@prismorglasses.com",
+    "passwordHash": "f0ab940e1aff3866c9527d5023fc2a423cc138624d835a9eaf0081fa8a2a506c80870d6197d2ddfda8042266ec4a02c4e42dd42098ac5c9e04960335b63d968b",
+    "passwordSalt": "8b3faff8ab2758343381dd603466e0c5",
+    "role": "superuser"
+  }
+]

@@ -15,8 +15,8 @@ const UPLOADS_DIR = path.join(__dirname, 'uploads');
   if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
 });
 
-/* ─── IN-MEMORY SESSION ──────────────────────────────────────── */
-let adminToken = null;
+/* ─── SESSIONS ───────────────────────────────────────────────── */
+const sessions = new Map(); // token → { userId, role, email }
 
 /* ─── MULTER — dynamic dest per product slug ─────────────────── */
 const storage = multer.diskStorage({
@@ -39,6 +39,29 @@ const upload = multer({
     cb(null, allowed.includes(path.extname(file.originalname).toLowerCase()));
   },
 });
+
+/* ─── PASSWORD HASHING ───────────────────────────────────────── */
+function hashPassword(password, salt) {
+  return crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha512').toString('hex');
+}
+
+/* ─── USER HELPERS ───────────────────────────────────────────── */
+function getUsers()        { return readJSON('users.json', []); }
+function saveUsers(users)  { writeJSON('users.json', users); }
+
+function ensureSuperUser() {
+  const users = getUsers();
+  if (users.find(u => u.role === 'superuser')) return;
+  const salt = crypto.randomBytes(16).toString('hex');
+  users.unshift({
+    id:           'u_superuser',
+    email:        'omar@prismorglasses.com',
+    passwordHash: hashPassword('k&P9#zR2vL7nB$mQ', salt),
+    passwordSalt: salt,
+    role:         'superuser',
+  });
+  saveUsers(users);
+}
 
 /* ─── JSON HELPERS ───────────────────────────────────────────── */
 function readJSON(relPath, defaultVal) {
@@ -69,11 +92,25 @@ function productPath(slug, file) {
 }
 
 /* ─── AUTH MIDDLEWARE ────────────────────────────────────────── */
+function getToken(req) {
+  return (req.headers.authorization || '').replace('Bearer ', '').trim();
+}
 function requireAuth(req, res, next) {
-  const tok = (req.headers.authorization || '').replace('Bearer ', '').trim();
-  if (!adminToken || tok !== adminToken) return res.status(401).json({ error: 'Unauthorized' });
+  const sess = sessions.get(getToken(req));
+  if (!sess) return res.status(401).json({ error: 'Unauthorized' });
+  req.session = sess;
   next();
 }
+function requireSuperUser(req, res, next) {
+  requireAuth(req, res, () => {
+    if (req.session.role !== 'superuser')
+      return res.status(403).json({ error: 'Forbidden: superuser only' });
+    next();
+  });
+}
+
+/* ─── INIT ───────────────────────────────────────────────────── */
+ensureSuperUser();
 
 /* ─── MIDDLEWARE ─────────────────────────────────────────────── */
 app.use(express.json());
@@ -84,19 +121,24 @@ app.use(express.static(__dirname));
    AUTH
 ══════════════════════════════════════════════════════════════ */
 app.post('/api/auth/login', (req, res) => {
-  const { password } = req.body || {};
-  const config = readJSON('config.json', { adminPassword: 'prismor2024' });
-  if (!password || password !== config.adminPassword)
-    return res.status(401).json({ error: 'Invalid password' });
-  adminToken = crypto.randomBytes(32).toString('hex');
-  res.json({ token: adminToken });
+  const { email, password } = req.body || {};
+  if (!email || !password) return res.status(401).json({ error: 'Invalid credentials' });
+  const user = getUsers().find(u => u.email === email);
+  if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+  if (hashPassword(password, user.passwordSalt) !== user.passwordHash)
+    return res.status(401).json({ error: 'Invalid credentials' });
+  const tok = crypto.randomBytes(32).toString('hex');
+  sessions.set(tok, { userId: user.id, role: user.role, email: user.email });
+  res.json({ token: tok, role: user.role, email: user.email });
 });
 app.post('/api/auth/logout', requireAuth, (req, res) => {
-  adminToken = null; res.json({ ok: true });
+  sessions.delete(getToken(req));
+  res.json({ ok: true });
 });
 app.get('/api/auth/check', (req, res) => {
-  const tok = (req.headers.authorization || '').replace('Bearer ', '').trim();
-  res.json({ valid: !!adminToken && tok === adminToken });
+  const sess = sessions.get(getToken(req));
+  if (!sess) return res.json({ valid: false });
+  res.json({ valid: true, role: sess.role, email: sess.email });
 });
 
 /* ══════════════════════════════════════════════════════════════
@@ -284,15 +326,88 @@ app.delete('/api/orders/:orderId', requireAuth, (req, res) => {
 });
 
 /* ══════════════════════════════════════════════════════════════
-   SETTINGS
+   SETTINGS (superuser only — change own password)
 ══════════════════════════════════════════════════════════════ */
-app.put('/api/settings/password', requireAuth, (req, res) => {
-  const { newPassword } = req.body || {};
+app.put('/api/settings/password', requireSuperUser, (req, res) => {
+  const { currentPassword, newPassword } = req.body || {};
   if (!newPassword || newPassword.length < 6)
     return res.status(400).json({ error: 'Password must be at least 6 characters' });
-  const config = readJSON('config.json', { adminPassword: 'prismor2024' });
-  config.adminPassword = newPassword;
-  writeJSON('config.json', config);
+  const users = getUsers();
+  const idx   = users.findIndex(u => u.id === req.session.userId);
+  if (idx === -1) return res.status(404).json({ error: 'User not found' });
+  if (hashPassword(currentPassword || '', users[idx].passwordSalt) !== users[idx].passwordHash)
+    return res.status(401).json({ error: 'Current password is incorrect' });
+  const salt = crypto.randomBytes(16).toString('hex');
+  users[idx].passwordHash = hashPassword(newPassword, salt);
+  users[idx].passwordSalt = salt;
+  saveUsers(users);
+  const currentTok = getToken(req);
+  for (const [tok, sess] of sessions.entries()) {
+    if (sess.userId === req.session.userId && tok !== currentTok) sessions.delete(tok);
+  }
+  res.json({ ok: true });
+});
+
+/* ══════════════════════════════════════════════════════════════
+   USER MANAGEMENT (superuser only)
+══════════════════════════════════════════════════════════════ */
+app.get('/api/users', requireSuperUser, (req, res) => {
+  res.json(getUsers()
+    .filter(u => u.role !== 'superuser')
+    .map(({ id, email, role }) => ({ id, email, role })));
+});
+
+app.post('/api/users', requireSuperUser, (req, res) => {
+  const { email, password } = req.body || {};
+  if (!email || !password || password.length < 6)
+    return res.status(400).json({ error: 'Email and password (min 6 chars) required' });
+  const users = getUsers();
+  if (users.find(u => u.email === email))
+    return res.status(409).json({ error: 'Email already in use' });
+  const salt = crypto.randomBytes(16).toString('hex');
+  const user = {
+    id:           `u_${Date.now()}`,
+    email,
+    passwordHash: hashPassword(password, salt),
+    passwordSalt: salt,
+    role:         'admin',
+  };
+  users.push(user);
+  saveUsers(users);
+  res.json({ id: user.id, email: user.email, role: user.role });
+});
+
+app.put('/api/users/:id', requireSuperUser, (req, res) => {
+  const users = getUsers();
+  const idx   = users.findIndex(u => u.id === req.params.id && u.role !== 'superuser');
+  if (idx === -1) return res.status(404).json({ error: 'Not found' });
+  const { email, password } = req.body || {};
+  if (email) {
+    if (users.find((u, i) => i !== idx && u.email === email))
+      return res.status(409).json({ error: 'Email already in use' });
+    users[idx].email = email;
+  }
+  if (password) {
+    if (password.length < 6) return res.status(400).json({ error: 'Password min 6 chars' });
+    const salt = crypto.randomBytes(16).toString('hex');
+    users[idx].passwordHash = hashPassword(password, salt);
+    users[idx].passwordSalt = salt;
+  }
+  saveUsers(users);
+  for (const [tok, sess] of sessions.entries()) {
+    if (sess.userId === users[idx].id) sessions.delete(tok);
+  }
+  res.json({ id: users[idx].id, email: users[idx].email, role: users[idx].role });
+});
+
+app.delete('/api/users/:id', requireSuperUser, (req, res) => {
+  const users = getUsers();
+  const user  = users.find(u => u.id === req.params.id && u.role !== 'superuser');
+  if (!user) return res.status(404).json({ error: 'Not found' });
+  saveUsers(users.filter(u => u.id !== req.params.id));
+  for (const [tok, sess] of sessions.entries()) {
+    if (sess.userId === req.params.id) sessions.delete(tok);
+  }
   res.json({ ok: true });
 });
 

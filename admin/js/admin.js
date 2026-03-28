@@ -4,11 +4,14 @@
 
 /* ─── STATE ──────────────────────────────────────────────────── */
 let token              = localStorage.getItem('adminToken') || '';
+let currentUserRole    = localStorage.getItem('adminRole')  || '';
+let currentUserEmail   = localStorage.getItem('adminEmail') || '';
 let currentPage        = 'dashboard';
 let currentProductSlug = localStorage.getItem('adminCurrentProduct') || '';
 let allOrders          = [];
 let editingRecId       = null;
 let removeRecImage     = false;
+let editingUserId      = null;
 
 /* ─── API HELPER ─────────────────────────────────────────────── */
 async function api(method, path, body) {
@@ -44,7 +47,15 @@ async function checkAuth() {
   const data = await fetch('/api/auth/check', {
     headers: { Authorization: `Bearer ${token}` },
   }).then(r => r.json()).catch(() => ({ valid: false }));
-  data.valid ? showApp() : showLogin();
+  if (data.valid) {
+    currentUserRole  = data.role;
+    currentUserEmail = data.email;
+    localStorage.setItem('adminRole',  data.role);
+    localStorage.setItem('adminEmail', data.email);
+    showApp();
+  } else {
+    showLogin();
+  }
 }
 
 function showLogin() {
@@ -52,23 +63,37 @@ function showLogin() {
   document.getElementById('app').style.display = 'none';
 }
 
+function applyRoleUI() {
+  const isSuperUser = currentUserRole === 'superuser';
+  // Users nav: superuser only
+  document.getElementById('navUsers').style.display = isSuperUser ? '' : 'none';
+  // Settings nav: superuser only (admins can't change password)
+  document.getElementById('navSettings').style.display = isSuperUser ? '' : 'none';
+}
+
 async function showApp() {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
+  applyRoleUI();
   navigate(currentPage);
 }
 
 function forceLogout() {
   token = '';
+  currentUserRole  = '';
+  currentUserEmail = '';
   localStorage.removeItem('adminToken');
+  localStorage.removeItem('adminRole');
+  localStorage.removeItem('adminEmail');
   showLogin();
 }
 
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
+  const email    = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value.trim();
-  const btn = document.getElementById('loginBtn');
-  const errEl = document.getElementById('loginErr');
+  const btn      = document.getElementById('loginBtn');
+  const errEl    = document.getElementById('loginErr');
   errEl.textContent = '';
   btn.disabled = true;
   btn.textContent = 'Signing in…';
@@ -76,11 +101,15 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     const data = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password }),
+      body: JSON.stringify({ email, password }),
     }).then(r => r.json());
     if (data.token) {
       token = data.token;
+      currentUserRole  = data.role;
+      currentUserEmail = data.email;
       localStorage.setItem('adminToken', token);
+      localStorage.setItem('adminRole',  data.role);
+      localStorage.setItem('adminEmail', data.email);
       showApp();
     } else {
       errEl.textContent = data.error || 'Login failed.';
@@ -144,7 +173,8 @@ function requireProduct() {
 const PAGE_TITLES = {
   dashboard: 'Dashboard', products: 'Products',
   product: 'Product Details', media: 'Media',
-  orders: 'Orders', recommendations: 'Recommendations', settings: 'Settings',
+  orders: 'Orders', recommendations: 'Recommendations',
+  users: 'Users', settings: 'Settings',
 };
 
 function navigate(page) {
@@ -159,12 +189,13 @@ function navigate(page) {
 
 async function loadPage(page) {
   switch (page) {
-    case 'dashboard':      await loadDashboard();  break;
-    case 'products':       await loadProductsList(); break;
-    case 'product':        await loadProduct();    break;
-    case 'media':          await loadMedia();      break;
-    case 'orders':         await loadOrders();     break;
-    case 'recommendations': await loadRecs();      break;
+    case 'dashboard':       await loadDashboard();     break;
+    case 'products':        await loadProductsList();  break;
+    case 'product':         await loadProduct();       break;
+    case 'media':           await loadMedia();         break;
+    case 'orders':          await loadOrders();        break;
+    case 'recommendations': await loadRecs();          break;
+    case 'users':           await loadUsersPage();     break;
   }
 }
 
@@ -720,25 +751,130 @@ syncColorPicker('rColorHexPicker',   'rColorHex');
 syncColorPicker('rBadgeColorPicker', 'rBadgeColor');
 
 /* ═══════════════════════════════════════════════════════════════
+   USERS (superuser only)
+═══════════════════════════════════════════════════════════════ */
+async function loadUsersPage() {
+  const list = await api('GET', '/api/users').catch(() => null);
+  if (list === null) return;
+
+  const container = document.getElementById('usersList');
+  if (!list.length) {
+    container.innerHTML = '<p class="table-empty">No admin users yet. Click "+ Add Admin" to create one.</p>';
+  } else {
+    container.innerHTML = `
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Email</th><th>Role</th><th style="width:120px"></th></tr></thead>
+          <tbody>
+            ${list.map(u => `
+              <tr id="user-row-${escHtml(u.id)}">
+                <td>${escHtml(u.email)}</td>
+                <td><span class="role-badge">${escHtml(u.role)}</span></td>
+                <td>
+                  <button class="btn-ghost btn-sm" onclick="openEditUser('${escHtml(u.id)}','${escHtml(u.email)}')">Edit</button>
+                  <button class="btn-danger btn-sm" onclick="deleteUser('${escHtml(u.id)}')">Delete</button>
+                </td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  }
+
+  // Reset form to "add" state
+  openAddUser();
+  document.getElementById('userFormCard').style.display = 'none';
+}
+
+function openAddUser() {
+  editingUserId = null;
+  document.getElementById('userFormTitle').textContent = 'Add Admin User';
+  document.getElementById('userSubmitBtn').textContent  = 'Create Admin';
+  document.getElementById('userId').value   = '';
+  document.getElementById('uEmail').value   = '';
+  document.getElementById('uPassword').value = '';
+  document.getElementById('uPasswordLabel').textContent = 'Password';
+  document.getElementById('uPasswordHint').style.display = 'none';
+  document.getElementById('uPassword').required = true;
+  document.getElementById('userFormErr').textContent = '';
+}
+
+function openEditUser(id, email) {
+  editingUserId = id;
+  document.getElementById('userFormTitle').textContent = 'Edit Admin User';
+  document.getElementById('userSubmitBtn').textContent  = 'Save Changes';
+  document.getElementById('userId').value   = id;
+  document.getElementById('uEmail').value   = email;
+  document.getElementById('uPassword').value = '';
+  document.getElementById('uPasswordLabel').textContent = 'New Password';
+  document.getElementById('uPasswordHint').style.display = '';
+  document.getElementById('uPassword').required = false;
+  document.getElementById('userFormErr').textContent = '';
+  document.getElementById('userFormCard').style.display = '';
+  document.getElementById('uEmail').focus();
+}
+
+document.getElementById('showAddUserBtn').addEventListener('click', () => {
+  openAddUser();
+  document.getElementById('userFormCard').style.display = '';
+  document.getElementById('uEmail').focus();
+});
+document.getElementById('cancelUserBtn').addEventListener('click', () => {
+  document.getElementById('userFormCard').style.display = 'none';
+});
+
+document.getElementById('userForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email    = document.getElementById('uEmail').value.trim();
+  const password = document.getElementById('uPassword').value;
+  const errEl    = document.getElementById('userFormErr');
+  const btn      = document.getElementById('userSubmitBtn');
+  errEl.textContent = '';
+
+  const body = {};
+  if (email)    body.email    = email;
+  if (password) body.password = password;
+
+  btn.disabled = true;
+  try {
+    if (editingUserId) {
+      await api('PUT', `/api/users/${editingUserId}`, body);
+      toast('User updated.');
+    } else {
+      await api('POST', '/api/users', body);
+      toast('Admin user created.');
+    }
+    document.getElementById('userFormCard').style.display = 'none';
+    await loadUsersPage();
+  } catch (err) {
+    errEl.textContent = err.message || 'Failed.';
+  } finally { btn.disabled = false; }
+});
+
+async function deleteUser(id) {
+  if (!confirm('Delete this admin user? They will be logged out immediately.')) return;
+  try {
+    await api('DELETE', `/api/users/${id}`);
+    document.getElementById(`user-row-${id}`)?.remove();
+    toast('User deleted.');
+    await loadUsersPage();
+  } catch (err) { toast(err.message || 'Delete failed', 'error'); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
    SETTINGS
 ═══════════════════════════════════════════════════════════════ */
 document.getElementById('passwordForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const current  = document.getElementById('currentPassword').value;
-  const next     = document.getElementById('newPassword').value;
-  const confirm  = document.getElementById('confirmPassword').value;
-  const errEl    = document.getElementById('passwordErr');
+  const current = document.getElementById('currentPassword').value;
+  const next    = document.getElementById('newPassword').value;
+  const confirm = document.getElementById('confirmPassword').value;
+  const errEl   = document.getElementById('passwordErr');
   errEl.textContent = '';
   if (next !== confirm) { errEl.textContent = 'Passwords do not match.'; return; }
   if (next.length < 6)  { errEl.textContent = 'Password must be at least 6 characters.'; return; }
-  const check = await fetch('/api/auth/login', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ password: current }),
-  }).then(r => r.json()).catch(() => ({}));
-  if (!check.token) { errEl.textContent = 'Current password is incorrect.'; return; }
   const btn = e.submitter; btn.disabled = true;
   try {
-    await api('PUT', '/api/settings/password', { newPassword: next });
+    await api('PUT', '/api/settings/password', { currentPassword: current, newPassword: next });
     toast('Password updated! Logging out…');
     e.target.reset();
     setTimeout(forceLogout, 2000);

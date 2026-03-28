@@ -18,8 +18,12 @@
         <span style="display:none">PRISMOR</span>
       </div>
       <h1 class="login-title">Admin Panel</h1>
-      <p class="login-sub">Enter your password to continue</p>
+      <p class="login-sub">Sign in with your email and password</p>
       <form id="loginForm">
+        <div class="field-group">
+          <label>Email</label>
+          <input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email" />
+        </div>
         <div class="field-group">
           <label>Password</label>
           <input type="password" id="loginPassword" placeholder="Enter password" autocomplete="current-password" />
@@ -67,8 +71,12 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
           Recommendations
         </a></li>
+        <li id="navUsers" style="display:none"><a href="#" class="nav-link" data-page="users">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          Users
+        </a></li>
         <li class="nav-separator"></li>
-        <li><a href="#" class="nav-link" data-page="settings">
+        <li id="navSettings"><a href="#" class="nav-link" data-page="settings">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
           Settings
         </a></li>
@@ -357,10 +365,44 @@
           </div>
         </div>
 
+        <!-- ── USERS ── -->
+        <div class="page" id="page-users" style="display:none">
+          <div class="card">
+            <div class="card-head">
+              <h3>Admin Users</h3>
+              <button class="btn-primary btn-sm" id="showAddUserBtn">+ Add Admin</button>
+            </div>
+            <div id="usersList"></div>
+          </div>
+
+          <!-- Add / Edit user form -->
+          <div class="card mt-20" id="userFormCard" style="display:none">
+            <div class="card-head">
+              <h3 id="userFormTitle">Add Admin User</h3>
+              <button class="btn-ghost btn-sm" id="cancelUserBtn">Cancel</button>
+            </div>
+            <form id="userForm" class="form-grid">
+              <input type="hidden" id="userId" />
+              <div class="field-group">
+                <label>Email</label>
+                <input type="email" id="uEmail" placeholder="admin@example.com" />
+              </div>
+              <div class="field-group">
+                <label id="uPasswordLabel">Password</label>
+                <input type="password" id="uPassword" placeholder="Min 6 characters" autocomplete="new-password" />
+                <span class="field-hint" id="uPasswordHint" style="display:none">Leave blank to keep current password.</span>
+              </div>
+              <span class="field-err" id="userFormErr"></span>
+              <button type="submit" class="btn-primary" id="userSubmitBtn">Create Admin</button>
+            </form>
+          </div>
+        </div>
+
         <!-- ── SETTINGS ── -->
         <div class="page" id="page-settings" style="display:none">
           <div class="card" style="max-width:480px">
             <div class="card-head"><h3>Change Password</h3></div>
+            <p style="color:var(--muted);font-size:13px;margin-bottom:16px;padding:0 0 4px">Update your superuser account password.</p>
             <form id="passwordForm" class="form-grid">
               <div class="field-group">
                 <label>Current Password</label>
