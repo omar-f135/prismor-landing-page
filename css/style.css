@@ -1175,3 +1175,73 @@ input, textarea, select { font-family: var(--font); }
   }
   .invoice-action-bar { display: none !important; }
 }
+
+/* ─── DISTRICT SELECT ───────────────────────────────────── */
+.district-select {
+  position: relative;
+}
+.district-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.district-input-wrap input {
+  width: 100%;
+  padding-right: 36px;
+  cursor: pointer;
+}
+.district-arrow {
+  position: absolute;
+  right: 12px;
+  color: #888;
+  pointer-events: none;
+  transition: transform .2s;
+}
+.district-dropdown.open ~ .district-input-wrap .district-arrow,
+.district-select:focus-within .district-arrow {
+  transform: rotate(180deg);
+}
+.district-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e0e0da;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.10);
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 200;
+  scrollbar-width: thin;
+  scrollbar-color: #ddd transparent;
+}
+.district-dropdown.open {
+  display: block;
+}
+.district-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 14px;
+  font-size: 14px;
+  cursor: pointer;
+  color: #1a1a1a;
+  transition: background .12s;
+}
+.district-option:hover {
+  background: #fff3e4;
+}
+.district-option.district-empty {
+  color: #aaa;
+  cursor: default;
+  justify-content: center;
+}
+.district-charge {
+  font-size: 12px;
+  font-weight: 600;
+  color: #ff8401;
+  margin-left: 8px;
+  white-space: nowrap;
+}

@@ -1,0 +1,82 @@
+{
+  "Dhaka": {
+    "Dhaka": 70,
+    "Faridpur": 120,
+    "Gazipur": 70,
+    "Gopalganj": 120,
+    "Kishoreganj": 120,
+    "Madaripur": 120,
+    "Manikganj": 120,
+    "Munshiganj": 120,
+    "Narayanganj": 120,
+    "Narsingdi": 120,
+    "Rajbari": 120,
+    "Shariatpur": 120,
+    "Tangail": 120
+  },
+  "Chattogram": {
+    "Bandarban": 120,
+    "Brahmanbaria": 120,
+    "Chandpur": 120,
+    "Chattogram": 120,
+    "Cox's Bazar": 120,
+    "Cumilla": 120,
+    "Feni": 120,
+    "Khagrachhari": 120,
+    "Lakshmipur": 120,
+    "Noakhali": 120,
+    "Rangamati": 120
+  },
+  "Rajshahi": {
+    "Bogura": 120,
+    "Chapai Nawabganj": 120,
+    "Joypurhat": 120,
+    "Naogaon": 120,
+    "Natore": 120,
+    "Pabna": 120,
+    "Rajshahi": 120,
+    "Sirajganj": 120
+  },
+  "Khulna": {
+    "Bagerhat": 120,
+    "Chuadanga": 120,
+    "Jashore": 120,
+    "Jhenaidah": 120,
+    "Khulna": 120,
+    "Kushtia": 120,
+    "Magura": 120,
+    "Meherpur": 120,
+    "Narail": 120,
+    "Satkhira": 120
+  },
+  "Barishal": {
+    "Barguna": 120,
+    "Barishal": 120,
+    "Bhola": 120,
+    "Jhalokati": 120,
+    "Patuakhali": 120,
+    "Pirojpur": 120
+  },
+  "Sylhet": {
+    "Habiganj": 120,
+    "Moulvibazar": 120,
+    "Sunamganj": 120,
+    "Sylhet": 120
+  },
+  "Rangpur": {
+    "Dinajpur": 120,
+    "Gaibandha": 120,
+    "Kurigram": 120,
+    "Lalmonirhat": 120,
+    "Nilphamari": 120,
+    "Panchagarh": 120,
+    "Rangpur": 120,
+    "Thakurgaon": 120
+  },
+  "Mymensingh": {
+    "Jamalpur": 120,
+    "Mymensingh": 120,
+    "Netrokona": 120,
+    "Sherpur": 120
+  }
+}

@@ -7,9 +7,9 @@
 let CONFIG = {};
 let productMedia = [];
 let recommendations = [];
-let discount = 0;
-let afterDiscount = 0;
 let PRODUCT_SLUG = '';
+let districtData = {};   // { Division: { District: charge } }
+let selectedDistrict = null;   // { name, charge }
 
 /* ─── SLUG DETECTION ──────────────────────────────────────────── */
 async function detectSlug() {
@@ -32,15 +32,17 @@ async function detectSlug() {
 /* ─── DATA LOADING ────────────────────────────────────────────── */
 async function loadData() {
   PRODUCT_SLUG = await detectSlug();
-  if (!PRODUCT_SLUG) return; // No products yet
-  const [product, media, recs] = await Promise.all([
+  if (!PRODUCT_SLUG) return;
+  const [product, media, recs, districts] = await Promise.all([
     fetch(`/api/products/${PRODUCT_SLUG}/product`).then(r => r.json()),
     fetch(`/api/products/${PRODUCT_SLUG}/media`).then(r => r.json()),
     fetch(`/api/products/${PRODUCT_SLUG}/recommendations`).then(r => r.json()),
+    fetch('/api/districts').then(r => r.json()).catch(() => ({})),
   ]);
   CONFIG = product;
   productMedia = media;
   recommendations = recs;
+  districtData = districts;
 }
 
 /* ─── HELPERS ─────────────────────────────────────────────────── */
@@ -62,8 +64,7 @@ function formatBDT(n) {
 }
 
 function calcPrices() {
-  const disc = Math.round(CONFIG.originalPrice * CONFIG.discountPct / 100);
-  return { discount: disc, afterDiscount: CONFIG.originalPrice - disc };
+  return { discount: 0, afterDiscount: CONFIG.originalPrice || 0 };
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -269,64 +270,84 @@ function populateProductMeta() {
     ).join('');
   }
 
-  // Price card (static values → update with real CONFIG)
-  const origPrice = CONFIG.originalPrice || 0;
-  document.querySelectorAll('.price-row').forEach(row => {
-    const label = row.querySelector('span:first-child')?.textContent || '';
-    if (label.includes('Product Price')) {
-      row.querySelector('span:last-child').textContent = formatBDT(origPrice);
-    }
-    if (label.includes('Discount')) {
-      row.querySelector('span:last-child').textContent = `− ${formatBDT(discount)}`;
-      row.querySelector('em')?.replaceWith(Object.assign(document.createElement('em'), { textContent: `${CONFIG.discountPct}% off` }));
-    }
-    if (label.includes('After Discount')) {
-      row.querySelector('span:last-child').textContent = formatBDT(afterDiscount);
-    }
-  });
+  // Tags / badges
+  const badgesEl = document.getElementById('productBadges');
+  if (badgesEl && CONFIG.tags && CONFIG.tags.length) {
+    badgesEl.innerHTML = CONFIG.tags.map(t => `<span class="badge">${t}</span>`).join('');
+  }
+
+  // Price card
+  const priceEl = document.getElementById('productPriceDisplay');
+  if (priceEl) priceEl.textContent = formatBDT(CONFIG.originalPrice || 0);
 }
 
 /* ══════════════════════════════════════════════════════════════
-   5. DELIVERY SELECTION + PRICE UPDATE
+   5. DISTRICT SELECT + DELIVERY CHARGE
 ══════════════════════════════════════════════════════════════ */
-function initDeliveryOptions() {
-  const radios     = document.querySelectorAll('input[name="delivery"]');
-  const cardInside  = document.getElementById('cardInside');
-  const cardOutside = document.getElementById('cardOutside');
+function initDistrictSelect() {
+  const searchInput = document.getElementById('districtSearch');
+  const dropdown    = document.getElementById('districtDropdown');
+  const hiddenInput = document.getElementById('selectedDistrict');
   const deliveryEl  = document.getElementById('deliveryCharge');
   const totalEl     = document.getElementById('totalPrice');
 
-  // Update delivery price labels
-  const dcPrices = document.querySelectorAll('.dc-price');
-  if (dcPrices[0]) dcPrices[0].textContent = formatBDT(CONFIG.deliveryInside);
-  if (dcPrices[1]) dcPrices[1].textContent = formatBDT(CONFIG.deliveryOutside);
+  // Flatten districtData into sorted list: [{name, charge}]
+  const allDistricts = [];
+  Object.values(districtData).forEach(districts => {
+    Object.entries(districts).forEach(([name, charge]) => {
+      allDistricts.push({ name, charge });
+    });
+  });
+  allDistricts.sort((a, b) => a.name.localeCompare(b.name));
 
-  function updateDelivery() {
-    const val    = document.querySelector('input[name="delivery"]:checked')?.value;
-    const charge = val === 'outside' ? CONFIG.deliveryOutside : CONFIG.deliveryInside;
-    cardInside?.classList.toggle('selected', val !== 'outside');
-    cardOutside?.classList.toggle('selected', val === 'outside');
+  function renderList(filter) {
+    const q = filter.toLowerCase();
+    const filtered = q ? allDistricts.filter(d => d.name.toLowerCase().includes(q)) : allDistricts;
+    if (!filtered.length) {
+      dropdown.innerHTML = '<div class="district-option district-empty">No results</div>';
+      return;
+    }
+    dropdown.innerHTML = filtered.map(d =>
+      `<div class="district-option" data-name="${d.name}" data-charge="${d.charge}">${d.name}<span class="district-charge">৳ ${d.charge}</span></div>`
+    ).join('');
+    dropdown.querySelectorAll('.district-option').forEach(opt => {
+      opt.addEventListener('click', () => selectDistrict(opt.dataset.name, Number(opt.dataset.charge)));
+    });
+  }
+
+  function selectDistrict(name, charge) {
+    selectedDistrict = { name, charge };
+    hiddenInput.value = name;
+    searchInput.value = name;
+    dropdown.classList.remove('open');
+    clearErr('fgDistrict', 'districtErr');
     if (deliveryEl) deliveryEl.textContent = formatBDT(charge);
     if (totalEl) {
-      totalEl.textContent = formatBDT(afterDiscount + charge);
+      totalEl.textContent = formatBDT((CONFIG.originalPrice || 0) + charge);
       totalEl.style.transform = 'scale(1.05)';
       setTimeout(() => { totalEl.style.transform = ''; }, 200);
     }
   }
 
-  cardInside?.classList.add('selected');
-  if (deliveryEl) deliveryEl.textContent = formatBDT(CONFIG.deliveryInside);
-  if (totalEl)    totalEl.textContent    = formatBDT(afterDiscount + CONFIG.deliveryInside);
+  function openDropdown() {
+    renderList(searchInput.value);
+    dropdown.classList.add('open');
+  }
 
-  radios.forEach(r => r.addEventListener('change', updateDelivery));
-  document.querySelectorAll('.delivery-card').forEach(card => {
-    card.addEventListener('click', () => {
-      const radio = card.querySelector('input[type="radio"]');
-      if (radio && !radio.checked) {
-        radio.checked = true;
-        radio.dispatchEvent(new Event('change', { bubbles: true }));
-      }
-    });
+  searchInput.addEventListener('focus', openDropdown);
+  searchInput.addEventListener('input', () => {
+    selectedDistrict = null;
+    hiddenInput.value = '';
+    renderList(searchInput.value);
+    if (!dropdown.classList.contains('open')) dropdown.classList.add('open');
+    if (deliveryEl) deliveryEl.textContent = '—';
+    if (totalEl) totalEl.textContent = formatBDT(CONFIG.originalPrice || 0);
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!document.getElementById('districtSelect')?.contains(e.target)) {
+      dropdown.classList.remove('open');
+    }
   });
 }
 
@@ -365,6 +386,12 @@ function validateForm() {
     ok = false;
   }
 
+  clearErr('fgDistrict', 'districtErr');
+  if (!selectedDistrict) {
+    showErr('fgDistrict', 'districtErr', 'Please select your district.');
+    ok = false;
+  }
+
   clearErr('fgAddress', 'addressErr');
   if (!address || address.length < 10) {
     showErr('fgAddress', 'addressErr', address ? 'Please provide a complete address.' : 'Please enter your delivery address.');
@@ -378,6 +405,7 @@ function initRealTimeValidation() {
   document.getElementById('custName')?.addEventListener('input',    () => clearErr('fgName', 'nameErr'));
   document.getElementById('custPhone')?.addEventListener('input',   () => clearErr('fgPhone', 'phoneErr'));
   document.getElementById('custAddress')?.addEventListener('input', () => clearErr('fgAddress', 'addressErr'));
+  document.getElementById('districtSearch')?.addEventListener('input', () => clearErr('fgDistrict', 'districtErr'));
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -396,10 +424,10 @@ function generateOrderId() {
 let currentOrderData = null;
 
 function buildInvoiceHTML(order) {
-  const today        = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
-  const deliveryCharge = order.delivery === 'outside' ? CONFIG.deliveryOutside : CONFIG.deliveryInside;
-  const total        = afterDiscount + deliveryCharge;
-  const deliveryArea = order.delivery === 'outside' ? 'Outside Dhaka' : 'Inside Dhaka';
+  const today          = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+  const deliveryCharge = order.deliveryCharge || 0;
+  const total          = (CONFIG.originalPrice || 0) + deliveryCharge;
+  const districtName   = order.district || '—';
 
   return `
     <div class="inv-header">
@@ -420,7 +448,7 @@ function buildInvoiceHTML(order) {
       <p><strong>${order.name}</strong></p>
       <p>+88 ${order.phone}</p>
       <p>${order.address}</p>
-      <p>Delivery: ${deliveryArea}</p>
+      <p>District: ${districtName}</p>
     </div>
     <div class="inv-divider"></div>
     <span class="inv-section-label">Product</span>
@@ -433,9 +461,7 @@ function buildInvoiceHTML(order) {
     <span class="inv-section-label">Pricing</span>
     <div class="inv-pricing">
       <div class="inv-price-row"><span>Product Price</span><span>${formatBDT(CONFIG.originalPrice)}</span></div>
-      <div class="inv-price-row"><span>Discount (${CONFIG.discountPct}%)</span><span class="inv-discount">− ${formatBDT(discount)}</span></div>
-      <div class="inv-price-row"><span>After Discount</span><span>${formatBDT(afterDiscount)}</span></div>
-      <div class="inv-price-row"><span>Delivery (${deliveryArea})</span><span>${formatBDT(deliveryCharge)}</span></div>
+      <div class="inv-price-row"><span>Delivery (${districtName})</span><span>${formatBDT(deliveryCharge)}</span></div>
     </div>
     <div class="inv-total">
       <span>Total COD Amount</span>
@@ -467,20 +493,23 @@ function closeInvoice() {
   document.body.style.overflow = '';
 
   document.getElementById('orderForm')?.reset();
-  const insideRadio = document.querySelector('input[name="delivery"][value="inside"]');
-  if (insideRadio) insideRadio.checked = true;
-  document.getElementById('cardInside')?.classList.add('selected');
-  document.getElementById('cardOutside')?.classList.remove('selected');
-  document.getElementById('deliveryCharge').textContent = formatBDT(CONFIG.deliveryInside);
-  document.getElementById('totalPrice').textContent     = formatBDT(afterDiscount + CONFIG.deliveryInside);
+  selectedDistrict = null;
+  const districtSearch = document.getElementById('districtSearch');
+  if (districtSearch) districtSearch.value = '';
+  const hiddenDistrict = document.getElementById('selectedDistrict');
+  if (hiddenDistrict) hiddenDistrict.value = '';
+  const deliveryEl = document.getElementById('deliveryCharge');
+  const totalEl    = document.getElementById('totalPrice');
+  if (deliveryEl) deliveryEl.textContent = '—';
+  if (totalEl)    totalEl.textContent    = formatBDT(CONFIG.originalPrice || 0);
 }
 
 /* ─── PDF Download ───────────────────────────────────── */
 function downloadInvoicePDF(order) {
-  const today        = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
-  const deliveryCharge = order.delivery === 'outside' ? CONFIG.deliveryOutside : CONFIG.deliveryInside;
-  const total        = afterDiscount + deliveryCharge;
-  const deliveryArea = order.delivery === 'outside' ? 'Outside Dhaka' : 'Inside Dhaka';
+  const today          = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+  const deliveryCharge = order.deliveryCharge || 0;
+  const total          = (CONFIG.originalPrice || 0) + deliveryCharge;
+  const districtName   = order.district || '—';
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -539,7 +568,7 @@ function downloadInvoicePDF(order) {
     <p><strong>${order.name}</strong></p>
     <p>+88 ${order.phone}</p>
     <p>${order.address}</p>
-    <p>Delivery Area: ${deliveryArea}</p>
+    <p>District: ${districtName}</p>
   </div>
   <div class="inv-divider"></div>
   <span class="inv-section-label">Product Details</span>
@@ -552,9 +581,7 @@ function downloadInvoicePDF(order) {
   <span class="inv-section-label">Pricing Breakdown</span>
   <div>
     <div class="inv-price-row"><span>Product Price</span><span>${formatBDT(CONFIG.originalPrice)}</span></div>
-    <div class="inv-price-row"><span>Discount (${CONFIG.discountPct}%)</span><span class="inv-discount">− ${formatBDT(discount)}</span></div>
-    <div class="inv-price-row"><span>Price After Discount</span><span>${formatBDT(afterDiscount)}</span></div>
-    <div class="inv-price-row"><span>Delivery Charge (${deliveryArea})</span><span>${formatBDT(deliveryCharge)}</span></div>
+    <div class="inv-price-row"><span>Delivery Charge (${districtName})</span><span>${formatBDT(deliveryCharge)}</span></div>
   </div>
   <div class="inv-total">
     <span>Total COD Amount</span>
@@ -602,8 +629,7 @@ function initOrderConfirm() {
       return;
     }
 
-    const deliveryChoice = document.querySelector('input[name="delivery"]:checked')?.value || 'inside';
-    const deliveryCharge = deliveryChoice === 'outside' ? CONFIG.deliveryOutside : CONFIG.deliveryInside;
+    const deliveryCharge = selectedDistrict?.charge || 0;
     const orderId = generateOrderId();
 
     const orderData = {
@@ -611,11 +637,12 @@ function initOrderConfirm() {
       name:         document.getElementById('custName').value.trim(),
       phone:        document.getElementById('custPhone').value.trim(),
       address:      document.getElementById('custAddress').value.trim(),
-      delivery:     deliveryChoice,
+      district:     selectedDistrict?.name || '',
+      deliveryCharge,
       mediaLabel:   productMedia[currentMediaIndex]?.label || '',
       product:      CONFIG.productName,
       productSlug:  PRODUCT_SLUG,
-      total:        afterDiscount + deliveryCharge,
+      total:        (CONFIG.originalPrice || 0) + deliveryCharge,
     };
 
     // Brief button feedback
@@ -723,27 +750,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.warn('API unavailable, using empty defaults:', e);
     CONFIG = {
       productName: 'PRISMOR Sunglasses',
-      originalPrice: 3500, discountPct: 20,
-      deliveryInside: 70, deliveryOutside: 120,
+      originalPrice: 3500,
       whatsapp: '8801700000000',
       website: 'https://prismorglasses.com',
       specs: [],
     };
     productMedia = [];
     recommendations = [];
+    districtData = {};
   }
-
-  // Compute prices once data is loaded
-  const prices = calcPrices();
-  discount     = prices.discount;
-  afterDiscount = prices.afterDiscount;
 
   // Init everything
   populateProductMeta();
   initShowcase();
   initLightbox();
   initDescription();
-  initDeliveryOptions();
+  initDistrictSelect();
   initRealTimeValidation();
   initOrderConfirm();
   initInvoiceModal();

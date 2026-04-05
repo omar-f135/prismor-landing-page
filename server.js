@@ -176,6 +176,13 @@ app.delete('/api/products/:slug', requireAuth, (req, res) => {
 });
 
 /* ══════════════════════════════════════════════════════════════
+   DISTRICTS (public)
+══════════════════════════════════════════════════════════════ */
+app.get('/api/districts', (req, res) => {
+  res.json(readJSON('bangladesh_divisions_district_delivery_charges.json', {}));
+});
+
+/* ══════════════════════════════════════════════════════════════
    PRODUCT CONFIG (per-product)
 ══════════════════════════════════════════════════════════════ */
 app.get('/api/products/:slug/product', (req, res) => {

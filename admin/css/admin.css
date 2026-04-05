@@ -801,3 +801,16 @@ html, body {
   background: var(--orange-light);
   color: var(--orange);
 }
+
+/* ─── TAG EDITOR ─────────────────────────────────── */
+.tag-list { display: flex; flex-direction: column; gap: 6px; }
+.tag-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tag-item .tag-input {
+  flex: 1;
+  padding: 7px 10px;
+  font-size: 13px;
+}

@@ -351,6 +351,7 @@ async function loadProduct() {
   document.getElementById('pWhatsapp').value    = product.whatsapp || '';
   document.getElementById('pWebsite').value     = product.website || '';
   updatePricePreview();
+  renderTagEditor(product.tags || []);
   renderSpecEditor(product.specs || []);
 }
 
@@ -384,6 +385,57 @@ document.getElementById('productForm').addEventListener('submit', async (e) => {
     toast('Product details saved!');
   } catch (err) { toast(err.message || 'Save failed', 'error'); }
   finally { btn.disabled = false; btn.textContent = 'Save Product Details'; }
+});
+
+/* ── Tag Editor ──────────────────────────────────────── */
+function renderTagEditor(tags) {
+  const container = document.getElementById('tagEditor');
+  if (!tags.length) {
+    container.innerHTML = '<p style="color:#aaa;font-size:13px;padding:4px 0 8px">No tags yet. Add one below.</p>';
+    return;
+  }
+  container.innerHTML = `<div class="tag-list" id="tagList">
+    ${tags.map((t, i) => `
+      <div class="tag-item" data-idx="${i}">
+        <input type="text" class="tag-input" value="${escHtml(t)}" />
+        <button type="button" class="btn-danger btn-sm" onclick="this.closest('.tag-item').remove()">✕</button>
+      </div>`).join('')}
+  </div>`;
+}
+
+document.getElementById('addTagBtn').addEventListener('click', () => {
+  const input = document.getElementById('newTagInput');
+  const val = input.value.trim();
+  if (!val) return;
+  let list = document.getElementById('tagList');
+  if (!list) {
+    document.getElementById('tagEditor').innerHTML = '<div class="tag-list" id="tagList"></div>';
+    list = document.getElementById('tagList');
+  }
+  const div = document.createElement('div');
+  div.className = 'tag-item';
+  div.innerHTML = `<input type="text" class="tag-input" value="${escHtml(val)}" /><button type="button" class="btn-danger btn-sm" onclick="this.closest('.tag-item').remove()">✕</button>`;
+  list.appendChild(div);
+  input.value = '';
+  input.focus();
+});
+
+document.getElementById('newTagInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addTagBtn').click(); }
+});
+
+document.getElementById('saveTagsBtn').addEventListener('click', async () => {
+  if (!requireProduct()) return;
+  const btn = document.getElementById('saveTagsBtn');
+  const tags = [...document.querySelectorAll('.tag-input')]
+    .map(i => i.value.trim()).filter(Boolean);
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    const product = await api('GET', `/api/products/${currentProductSlug}/product`);
+    await api('PUT', `/api/products/${currentProductSlug}/product`, { ...product, tags });
+    toast('Tags saved!');
+  } catch (err) { toast(err.message || 'Save failed', 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Save Tags'; }
 });
 
 /* ── Spec Editor ─────────────────────────────────────── */
