@@ -654,6 +654,18 @@ function initOrderConfirm() {
     btn.style.transform = 'scale(.97)';
     setTimeout(() => { btn.style.opacity = ''; btn.style.transform = ''; }, 280);
 
+    // Meta Pixel: Purchase event
+    if (typeof fbq === 'function') {
+      fbq('track', 'Purchase', {
+        content_name:  orderData.product,
+        content_ids:   [orderData.productSlug],
+        content_type:  'product',
+        value:         orderData.total,
+        currency:      'BDT',
+        num_items:     1,
+      });
+    }
+
     // Save order to server (non-blocking — open invoice regardless)
     fetch('/api/orders', {
       method: 'POST',
@@ -762,6 +774,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     productMedia = [];
     recommendations = [];
     districtData = {};
+  }
+
+  // Meta Pixel: ViewContent after product data is loaded
+  if (typeof fbq === 'function' && CONFIG.productName) {
+    fbq('track', 'ViewContent', {
+      content_name:     CONFIG.productName,
+      content_ids:      [PRODUCT_SLUG],
+      content_type:     'product',
+      value:            CONFIG.originalPrice || 0,
+      currency:         'BDT',
+    });
   }
 
   // Init everything
