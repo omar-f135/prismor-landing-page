@@ -279,6 +279,10 @@ function populateProductMeta() {
   // Price card
   const priceEl = document.getElementById('productPriceDisplay');
   if (priceEl) priceEl.textContent = formatBDT(CONFIG.originalPrice || 0);
+
+  // Total COD — initially just product price (no district selected yet)
+  const totalEl = document.getElementById('totalPrice');
+  if (totalEl) totalEl.textContent = formatBDT(CONFIG.originalPrice || 0);
 }
 
 /* ══════════════════════════════════════════════════════════════
